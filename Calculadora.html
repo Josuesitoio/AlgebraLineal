@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Matrices</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,600;0,700;1,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+
+    <style>
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes backgroundAnimation {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+        @keyframes orbMovement {
+            0% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(20px, -20px) scale(1.05); }
+            50% { transform: translate(0, 20px) scale(1); }
+            75% { transform: translate(-20px, -10px) scale(0.95); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:Montserrat,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111}
+
+        :root{
+            --bg-1: #f4f5f7;
+            --bg-2: #e5e7eb;
+            --bg-fallback: #e5e7eb;
+            --card: rgba(255, 255, 255, 0.7);
+            --card-fallback: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --accent1: #F97316; /* Vibrant Orange */
+            --accent2: #EA580C; /* Darker Orange */
+            --gold: #FB923C;   /* Lighter Orange */
+            --glass-blur: 14px;
+        }
+        @media (prefers-color-scheme: dark){
+            :root{
+                --bg-1: #111827;
+                --bg-2: #1f2937;
+                --bg-fallback: #111827;
+                --card: rgba(31, 41, 55, 0.7);
+                --card-fallback: #1f2937;
+                --text: #f9fafb;
+                --muted: #9ca3af;
+                --accent1: #FB923C; /* Lighter Orange for dark mode */
+                --accent2: #F97316; /* Vibrant Orange for dark mode hover */
+                --gold: #FDBA74;   /* Pale Orange for dark mode */
+                --glass-blur: 12px;
+            }
+        }
+
+        body{
+            background-color: var(--bg-fallback);
+            background-image: radial-gradient(1200px 600px at 10% 10%, var(--bg-2) 0%, transparent 40%),
+                              radial-gradient(1000px 500px at 90% 90%, rgba(255, 255, 255, 0.1) 0%, transparent 25%),
+                              linear-gradient(160deg,var(--bg-1),transparent 60%);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: 250% 250%;
+            animation: backgroundAnimation 35s ease infinite alternate;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            display:flex;align-items:flex-start;justify-content:center;padding:48px 20px;
+            min-height: 100vh;
+        }
+
+        .sheet{
+            width:min(1100px,96vw);
+            background: var(--card);
+            border-radius:24px;
+            padding:48px 40px;
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+            backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+            box-shadow: 0 15px 45px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+            position:relative;overflow:hidden;
+            border:1px solid rgba(255,255,255,0.1);
+            animation: fadeIn 1s ease-out;
+            margin: 50px 0;
+        }
+        
+        .sheet::before{
+            content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);background-size:5px 5px;opacity:0.5;
+        }
+
+        .header{
+            display:flex;flex-direction:column;align-items:center;margin-bottom:40px;gap:8px;
+        }
+        .title{
+            font-family:'Playfair Display',serif;font-size:3.8rem;line-height:1;color:var(--text);font-weight:700;letter-spacing:0.4px;position:relative;display:inline-block;padding:8px 16px 0 16px;text-align:center;
+        }
+        .subtitle{font-style:italic;color:var(--muted);font-size:1.15rem;text-align:center;max-width: 600px;}
+        
+        /* Ocultamos el 'home-link' ya que esta es la página principal */
+        .home-link { display: none; }
+
+        .brush-wrap{position:absolute;left:50%;transform:translateX(-50%);top:85px;width:500px;pointer-events:none}
+        svg.brush{width:100%;height:40px;overflow:visible}
+        path.stroke{fill:none;stroke:var(--accent1);stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1000;stroke-dashoffset:1000;filter:drop-shadow(0 8px 10px rgba(249, 115, 22, 0.15));animation: drawBrush 2s ease-out 0.5s forwards;}
+        @media (prefers-color-scheme: dark){path.stroke{stroke:var(--accent2); filter:drop-shadow(0 8px 10px rgba(251, 146, 60, 0.2));}}
+
+        @keyframes drawBrush {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .content{
+            display:flex;
+            flex-direction:column;
+            gap:40px;
+        }
+
+        .section {
+            background: rgba(0,0,0,0.03);
+            border-radius: 18px;
+            padding: 30px;
+            /* La animación se disparará con JS */
+            opacity: 0;
+            transform: translateY(30px);
+            animation: none; 
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        /* Estilo para las secciones cuando se muestren */
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @media (prefers-color-scheme: dark){
+            .section { background: rgba(255,255,255,0.03); }
+        }
+        
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: var(--accent1);
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed var(--accent2);
+            display: inline-block;
+        }
+
+        .section p, .section ul {
+            font-size: 1.1rem;
+            color: var(--text);
+            line-height: 1.7;
+            max-width: 80ch;
+            flex-grow: 1;
+        }
+        .section ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .section li {
+            padding-left: 1.5em;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .section li::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            font-size: 0.8em;
+            top: 0.3em;
+            color: var(--accent1);
+        }
+        .highlight {
+            font-weight: 600;
+            color: var(--gold);
+        }
+        
+        /* Ocultamos el botón de detalles original */
+        .details-btn { display: none; }
+        
+        .orb{position:absolute;border-radius:999px;mix-blend-mode:hard-light;opacity:.15;filter:blur(40px);pointer-events:none;animation: orbMovement 25s infinite ease-in-out alternate;}
+        .orb.one{width:300px;height:300px;right:-80px;top:-60px;background:var(--accent1);animation-delay: 0s;}
+        .orb.two{width:200px;height:200px;left:-80px;bottom:-80px;background:var(--gold);animation-delay: 5s;}
+        .orb.three{width:350px;height:350px;left:25%;top:15%;background:var(--accent2);animation-delay: 10s;}
+
+        @media (max-width:900px){
+            .sheet{padding:30px 20px;}
+            .title{font-size:2.8rem}
+            .brush-wrap{top:70px;width:350px}
+            .section-title{font-size: 1.8rem;}
+            .section p, .section ul {font-size: 1rem;}
+        }
+
+        @media (max-width:500px){
+            .title{font-size:2.2rem}
+            .brush-wrap{top:60px;width:280px}
+            body{padding:20px 10px;}
+        }
+
+        @media (prefers-reduced-motion: reduce){
+            body, .sheet, .section, .orb, path.stroke {animation: none;}
+            .sheet, .section {opacity: 1; transform: none;}
+            path.stroke {stroke-dashoffset: 0;}
+        }
+        
+        .calculator-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .matrix-setup {
+            background: rgba(0,0,0,0.03);
+            border-radius: 18px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        @media (prefers-color-scheme: dark){
+            .matrix-setup { background: rgba(255,255,255,0.03); }
+        }
+
+        .size-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+
+        .size-controls > div {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .size-controls label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .size-controls input[type="number"] {
+            width: 80px;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.5);
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--text);
+            -moz-appearance: textfield; /* Para Firefox */
+        }
+        /* Para Chrome, Safari, Edge */
+        .size-controls input::-webkit-outer-spin-button,
+        .size-controls input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        @media (prefers-color-scheme: dark){
+            .size-controls input[type="number"] {
+                border-color: rgba(255,255,255,0.1);
+                background: rgba(0,0,0,0.2);
+                color: var(--text);
+            }
+        }
+
+        /* Botón de Generar - Estilo basado en .details-btn */
+        .btn {
+            padding: 12px 24px;
+            background-color: var(--accent1);
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+            border: none;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+        }
+        .btn:hover {
+            background-color: var(--accent2);
+            transform: translateY(-3px);
+        }
+        .btn.secondary {
+            background-color: rgba(0,0,0,0.05);
+            color: var(--accent1);
+        }
+        @media (prefers-color-scheme: dark){
+            .btn.secondary { background-color: rgba(255,255,255,0.08); }
+        }
+        .btn.secondary:hover {
+            background-color: var(--accent1);
+            color: white;
+        }
+
+        .matrix-io {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .matrix-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .matrix-container h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .matrix-grid {
+            display: grid;
+            gap: 8px;
+            background: rgba(0,0,0,0.05);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        @media (prefers-color-scheme: dark){
+            .matrix-grid { 
+                background: rgba(255,255,255,0.05);
+                border-color: rgba(255,255,255,0.05);
+            }
+        }
+
+        .matrix-grid input {
+            width: 100%;
+            min-width: 50px;
+            height: 50px;
+            text-align: center;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            -moz-appearance: textfield; /* Para Firefox */
+        }
+        /* Para Chrome, Safari, Edge */
+        .matrix-grid input::-webkit-outer-spin-button,
+        .matrix-grid input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        @media (prefers-color-scheme: dark){
+            .matrix-grid input {
+                background: rgba(0,0,0,0.3);
+                border-color: rgba(255,255,255,0.1);
+                color: var(--text);
+            }
+        }
+
+        .operation-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        /* Estilos para el resultado */
+        .result-grid {
+            display: grid;
+            gap: 10px;
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            max-width: max-content;
+        }
+        @media (prefers-color-scheme: dark){
+            .result-grid { background: rgba(255,255,255,0.05); }
+        }
+
+        .result-cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--card);
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent1);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        @media (prefers-color-scheme: dark){
+            .result-cell { 
+                background: var(--card-fallback); 
+                color: var(--accent1);
+                border-color: rgba(255,255,255,0.1);
+            }
+        }
+        
+        /* --- 🎨 NUEVOS ESTILOS PARA EL PASO A PASO 🎨 --- */
+        
+        #steps-content {
+            /* Ya no usamos monospace, queremos un look limpio */
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text);
+            line-height: 1.7;
+            background: rgba(0,0,0,0.02);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+        @media (prefers-color-scheme: dark){
+            #steps-content { background: rgba(0,0,0,0.2); }
+        }
+
+        /* Estilo para Suma y Resta (simple) */
+        .step-calc-simple {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.15rem;
+            font-weight: 600;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .step-calc-simple:last-child {
+            border-bottom: none;
+        }
+        .step-calc-simple strong {
+            color: var(--accent2);
+            font-size: 1rem;
+            width: 100px;
+        }
+        .step-calc-simple .step-val {
+            background: rgba(0,0,0,0.05);
+            padding: 5px 12px;
+            border-radius: 6px;
+            color: var(--text);
+        }
+        .step-calc-simple .step-op {
+            color: var(--accent1);
+            font-size: 1.3rem;
+        }
+        .step-calc-simple .step-equals {
+            color: var(--muted);
+        }
+        .step-calc-simple .step-result {
+            background: var(--gold);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        @media (prefers-color-scheme: dark){
+            .step-calc-simple .step-val {
+                background: rgba(255,255,255,0.08);
+            }
+            .step-calc-simple .step-result {
+                background: var(--gold);
+                color: var(--bg-1);
+            }
+        }
+        
+        /* Estilo para Multiplicación (visual) */
+        .step-calculation {
+            padding: 25px 0;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+        }
+        .step-calculation:last-child {
+            border-bottom: none;
+        }
+        
+        .step-calculation h4 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--accent1);
+            margin: 0 0 10px 0;
+        }
+        
+        .step-calculation p {
+            font-size: 1rem;
+            color: var(--text);
+            margin: 0 0 15px 0;
+        }
+        
+        .step-visual {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .step-visual .step-op {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent2);
+        }
+
+        .step-matrix {
+            display: grid;
+            gap: 5px;
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        @media (prefers-color-scheme: dark){
+            .step-matrix { 
+                background: rgba(255,255,255,0.05);
+                border-color: rgba(255,255,255,0.1);
+            }
+        }
+        
+        .step-cell {
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.6);
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        @media (prefers-color-scheme: dark){
+            .step-cell { 
+                background: rgba(0,0,0,0.3);
+                border-color: rgba(255,255,255,0.1);
+            }
+        }
+        
+        /* ¡La magia! Colores de resaltado */
+        .step-cell.highlight-row {
+            background-color: var(--accent1);
+            color: white;
+            font-weight: 700;
+        }
+        .step-cell.highlight-col {
+            background-color: var(--gold);
+            color: white;
+            font-weight: 700;
+        }
+        @media (prefers-color-scheme: dark){
+            .step-cell.highlight-row {
+                color: var(--bg-1);
+            }
+            .step-cell.highlight-col {
+                color: var(--bg-1);
+            }
+        }
+        
+        .step-formula {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-top: 20px;
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+        }
+        .step-formula strong {
+            color: var(--accent1);
+            font-size: 1.2rem;
+        }
+        @media (prefers-color-scheme: dark){
+            .step-formula {
+                background: rgba(0,0,0,0.3);
+            }
+        }
+        
+        /* --- Fin de nuevos estilos --- */
+        
+        #error-message {
+            color: #e53e3e; /* Un rojo para errores */
+            font-weight: 600;
+            text-align: center;
+            margin-top: 15px;
+            display: none; /* Oculto por defecto */
+        }
+        @media (prefers-color-scheme: dark){
+            #error-message { color: #f9a8a8; }
+        }
+
+        /* Ajustes responsivos para la calculadora */
+        @media (max-width: 900px) {
+            .matrix-io {
+                grid-template-columns: 1fr;
+            }
+        }
+        @media (max-width: 500px) {
+            .size-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .size-controls > div {
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .size-controls input[type="number"] {
+                width: 100px;
+            }
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+            .operation-controls {
+                flex-direction: column;
+            }
+            .step-cell {
+                width: 35px;
+                height: 35px;
+                font-size: 0.8rem;
+            }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="orb one"></div>
+    <div class="orb two"></div>
+    <div class="orb three"></div>
+
+    <main class="sheet">
+        <header class="header">
+            <h1 class="title">Calculadora de Matrices</h1>
+            <div class="brush-wrap">
+                <svg class="brush" viewBox="0 0 499 37" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                    <path class="stroke" d="M2.31666667,16.4833333 C55.3166667,10.3833333 108.316667,7.15 161.316667,6.78333333 C261.316667,6.08333333 355.65,13.85 444.316667,20.0833333 C468.483333,21.85 490.65,23.1 496.816667,23.35" transform="translate(0, 5)"></path>
+                </svg>
+            </div>
+            <p class="subtitle">Ingresa las dimensiones, llena las matrices y calcula la suma, resta o multiplicación con el paso a paso detallado.</p>
+        </header>
+
+        <div class="content">
+
+            <div class="matrix-setup">
+                <div class="size-controls">
+                    <div>
+                        <label for="a-rows">Filas Matriz A</label>
+                        <input type="number" id="a-rows" value="2" min="1" max="8">
+                    </div>
+                    <div>
+                        <label for="a-cols">Columnas Matriz A</label>
+                        <input type="number" id="a-cols" value="2" min="1" max="8">
+                    </div>
+                    <div>
+                        <label for="b-rows">Filas Matriz B</label>
+                        <input type="number" id="b-rows" value="2" min="1" max="8">
+                    </div>
+                    <div>
+                        <label for="b-cols">Columnas Matriz B</label>
+                        <input type="number" id="b-cols" value="2" min="1" max="8">
+                    </div>
+                    <button id="generate-grids" class="btn">Generar Matrices</button>
+                </div>
+            </div>
+
+            <div class="calculator-layout">
+                <div class="matrix-io">
+                    <div class="matrix-container">
+                        <h3>Matriz A</h3>
+                        <div id="matrix-a" class="matrix-grid">
+                            </div>
+                    </div>
+                    <div class="matrix-container">
+                        <h3>Matriz B</h3>
+                        <div id="matrix-b" class="matrix-grid">
+                            </div>
+                    </div>
+                </div>
+
+                <div class="operation-controls">
+                    <button id="op-add" class="btn secondary">Sumar (A + B)</button>
+                    <button id="op-subtract" class="btn secondary">Restar (A - B)</button>
+                    <button id="op-multiply" class="btn secondary">Multiplicar (A x B)</button>
+                </div>
+                
+                <p id="error-message"></p>
+            </div>
+
+            <div id="result-section" class="section">
+                <h2 class="section-title">Resultado</h2>
+                <div id="result-grid" class="result-grid">
+                    </div>
+            </div>
+
+            <div id="steps-section" class="section">
+                <h2 class="section-title">Paso a Paso</h2>
+                <div id="steps-content" class="steps-content">
+                    </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Referencias a Elementos del DOM ---
+            const el = {
+                aRows: document.getElementById('a-rows'),
+                aCols: document.getElementById('a-cols'),
+                bRows: document.getElementById('b-rows'),
+                bCols: document.getElementById('b-cols'),
+                generateBtn: document.getElementById('generate-grids'),
+                matrixA: document.getElementById('matrix-a'),
+                matrixB: document.getElementById('matrix-b'),
+                opAdd: document.getElementById('op-add'),
+                opSubtract: document.getElementById('op-subtract'),
+                opMultiply: document.getElementById('op-multiply'),
+                resultSection: document.getElementById('result-section'),
+                resultGrid: document.getElementById('result-grid'),
+                stepsSection: document.getElementById('steps-section'),
+                stepsContent: document.getElementById('steps-content'),
+                errorMessage: document.getElementById('error-message')
+            };
+
+            // --- Funciones Principales ---
+
+            /**
+             * Genera los grids de input para las matrices A y B
+             */
+            function generateGrids() {
+                const aRows = parseInt(el.aRows.value);
+                const aCols = parseInt(el.aCols.value);
+                const bRows = parseInt(el.bRows.value);
+                const bCols = parseInt(el.bCols.value);
+
+                el.matrixA.innerHTML = '';
+                el.matrixA.style.gridTemplateColumns = `repeat(${aCols}, 1fr)`;
+                for (let i = 0; i < aRows; i++) {
+                    for (let j = 0; j < aCols; j++) {
+                        el.matrixA.innerHTML += `<input type="number" id="a-${i}-${j}" value="${Math.floor(Math.random() * 10)}" aria-label="Matriz A Fila ${i+1} Columna ${j+1}">`;
+                    }
+                }
+
+                el.matrixB.innerHTML = '';
+                el.matrixB.style.gridTemplateColumns = `repeat(${bCols}, 1fr)`;
+                for (let i = 0; i < bRows; i++) {
+                    for (let j = 0; j < bCols; j++) {
+                        el.matrixB.innerHTML += `<input type="number" id="b-${i}-${j}" value="${Math.floor(Math.random() * 10)}" aria-label="Matriz B Fila ${i+1} Columna ${j+1}">`;
+                    }
+                }
+                
+                clearResults();
+            }
+
+            /**
+             * Lee los valores de un grid y los devuelve como un array 2D de números
+             */
+            function getMatrix(id, rows, cols) {
+                let matrix = [];
+                for (let i = 0; i < rows; i++) {
+                    let row = [];
+                    for (let j = 0; j < cols; j++) {
+                        const input = document.getElementById(`${id}-${i}-${j}`);
+                        row.push(parseFloat(input.value) || 0); // Default a 0 si está vacío o inválido
+                    }
+                    matrix.push(row);
+                }
+                return matrix;
+            }
+
+            /**
+             * Oculta los resultados y limpia los errores
+             */
+            function clearResults() {
+                el.resultSection.classList.remove('visible');
+                el.stepsSection.classList.remove('visible');
+                el.errorMessage.style.display = 'none';
+                el.errorMessage.textContent = '';
+            }
+            
+            /**
+             * Muestra un mensaje de error
+             */
+            function showError(message) {
+                el.errorMessage.textContent = message;
+                el.errorMessage.style.display = 'block';
+                el.resultSection.classList.remove('visible');
+                el.stepsSection.classList.remove('visible');
+            }
+
+            /**
+             * Renderiza la matriz resultado en el DOM
+             */
+            function renderResult(matrix) {
+                const rows = matrix.length;
+                const cols = matrix[0].length;
+                
+                el.resultGrid.innerHTML = '';
+                el.resultGrid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+                
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        // Formatear número para evitar decimales largos
+                        const value = Math.round(matrix[i][j] * 1000) / 1000;
+                        el.resultGrid.innerHTML += `<div class="result-cell">${value}</div>`;
+                    }
+                }
+                
+                el.resultSection.classList.add('visible');
+            }
+            
+            /**
+             * Renderiza el string HTML de pasos en el DOM
+             */
+            function renderSteps(stepsHtml) {
+                el.stepsContent.innerHTML = stepsHtml;
+                el.stepsSection.classList.add('visible');
+            }
+            
+            /**
+             * 🎨 NUEVA FUNCIÓN: Genera el HTML para una "mini-matriz" visual en los pasos
+             * @param {number[][]} matrix - La matriz de datos
+             * @param {number} highRow - Fila para resaltar (-1 para ninguna)
+             * @param {number} highCol - Columna para resaltar (-1 para ninguna)
+             * @returns {string} - El HTML de la mini-matriz
+             */
+            function renderStepMatrix(matrix, highRow = -1, highCol = -1) {
+                const rows = matrix.length;
+                const cols = matrix[0].length;
+                let html = `<div class="step-matrix" style="grid-template-columns: repeat(${cols}, 45px);">`;
+                
+                for (let i = 0; i < rows; i++) {
+                    for (let j = 0; j < cols; j++) {
+                        let classes = 'step-cell';
+                        if (i === highRow) classes += ' highlight-row';
+                        if (j === highCol) classes += ' highlight-col';
+                        
+                        html += `<div class="${classes}">${matrix[i][j]}</div>`;
+                    }
+                }
+                
+                html += '</div>';
+                return html;
+            }
+
+            // --- Lógica de Operaciones (Actualizada) ---
+
+            function performAddition() {
+                clearResults();
+                const aRows = parseInt(el.aRows.value);
+                const aCols = parseInt(el.aCols.value);
+                const bRows = parseInt(el.bRows.value);
+                const bCols = parseInt(el.bCols.value);
+
+                if (aRows !== bRows || aCols !== bCols) {
+                    showError('Error: Para sumar, las matrices deben tener las mismas dimensiones.');
+                    return;
+                }
+
+                const matrixA = getMatrix('a', aRows, aCols);
+                const matrixB = getMatrix('b', bRows, bCols);
+                let resultMatrix = [];
+                let stepsHtml = 'Calculando cada celda (Fila, Columna):<br>';
+
+                for (let i = 0; i < aRows; i++) {
+                    let resultRow = [];
+                    for (let j = 0; j < aCols; j++) {
+                        const valA = matrixA[i][j];
+                        const valB = matrixB[i][j];
+                        const resultVal = valA + valB;
+                        resultRow.push(resultVal);
+                        
+                        // 🎨 Nuevo formato de pasos para Suma
+                        stepsHtml += `<div class="step-calc-simple">`;
+                        stepsHtml += `<strong>C(${i+1},${j+1})</strong>`;
+                        stepsHtml += `<span class="step-equals">=</span>`;
+                        stepsHtml += `<span class="step-val">${valA}</span>`;
+                        stepsHtml += `<span class="step-op">+</span>`;
+                        stepsHtml += `<span class="step-val">${valB}</span>`;
+                        stepsHtml += `<span class="step-equals">=</span>`;
+                        stepsHtml += `<span class="step-result">${resultVal}</span>`;
+                        stepsHtml += `</div>`;
+                    }
+                    resultMatrix.push(resultRow);
+                }
+
+                renderResult(resultMatrix);
+                renderSteps(stepsHtml);
+            }
+            
+            function performSubtraction() {
+                clearResults();
+                const aRows = parseInt(el.aRows.value);
+                const aCols = parseInt(el.aCols.value);
+                const bRows = parseInt(el.bRows.value);
+                const bCols = parseInt(el.bCols.value);
+
+                if (aRows !== bRows || aCols !== bCols) {
+                    showError('Error: Para restar, las matrices deben tener las mismas dimensiones.');
+                    return;
+                }
+
+                const matrixA = getMatrix('a', aRows, aCols);
+                const matrixB = getMatrix('b', bRows, bCols);
+                let resultMatrix = [];
+                let stepsHtml = 'Calculando cada celda (Fila, Columna):<br>';
+
+                for (let i = 0; i < aRows; i++) {
+                    let resultRow = [];
+                    for (let j = 0; j < aCols; j++) {
+                        const valA = matrixA[i][j];
+                        const valB = matrixB[i][j];
+                        const resultVal = valA - valB;
+                        resultRow.push(resultVal);
+                        
+                        // 🎨 Nuevo formato de pasos para Resta
+                        stepsHtml += `<div class="step-calc-simple">`;
+                        stepsHtml += `<strong>C(${i+1},${j+1})</strong>`;
+                        stepsHtml += `<span class="step-equals">=</span>`;
+                        stepsHtml += `<span class="step-val">${valA}</span>`;
+                        stepsHtml += `<span class="step-op">-</span>`;
+                        stepsHtml += `<span class="step-val">${valB}</span>`;
+                        stepsHtml += `<span class="step-equals">=</span>`;
+                        stepsHtml += `<span class="step-result">${resultVal}</span>`;
+                        stepsHtml += `</div>`;
+                    }
+                    resultMatrix.push(resultRow);
+                }
+
+                renderResult(resultMatrix);
+                renderSteps(stepsHtml);
+            }
+            
+            function performMultiplication() {
+                clearResults();
+                const aRows = parseInt(el.aRows.value);
+                const aCols = parseInt(el.aCols.value);
+                const bRows = parseInt(el.bRows.value);
+                const bCols = parseInt(el.bCols.value);
+
+                if (aCols !== bRows) {
+                    showError('Error: Para multiplicar, el número de Columnas de A debe ser igual al número de Filas de B.');
+                    return;
+                }
+
+                const matrixA = getMatrix('a', aRows, aCols);
+                const matrixB = getMatrix('b', bRows, bCols);
+                let resultMatrix = [];
+                let stepsHtml = ''; // 🎨 El HTML se construirá de forma diferente
+
+                // i = fila de A (y fila de C)
+                for (let i = 0; i < aRows; i++) {
+                    let resultRow = [];
+                    // j = columna de B (y columna de C)
+                    for (let j = 0; j < bCols; j++) {
+                        let sum = 0;
+                        let formulaText = '= '; // Para el (1*5) + (2*7)
+                        let formulaParts = [];
+
+                        // 🎨 Inicio de la sección para esta celda
+                        stepsHtml += `<div class="step-calculation">`;
+                        stepsHtml += `<h4>Cálculo para C(${i+1}, ${j+1})</h4>`;
+                        stepsHtml += `<p>Multiplicamos la <strong>Fila ${i+1} de A</strong> por la <strong>Columna ${j+1} de B</strong>:</p>`;
+                        
+                        // 🎨 Contenedor visual
+                        stepsHtml += `<div class="step-visual">`;
+                        
+                        // Renderizar Matriz A con fila resaltada
+                        stepsHtml += renderStepMatrix(matrixA, i, -1); 
+                        
+                        stepsHtml += `<span class="step-op">×</span>`;
+                        
+                        // Renderizar Matriz B con columna resaltada
+                        stepsHtml += renderStepMatrix(matrixB, -1, j);
+                        
+                        stepsHtml += `</div>`; // Fin de .step-visual
+                        
+                        // k = columna de A y fila de B
+                        for (let k = 0; k < aCols; k++) {
+                            const valA = matrixA[i][k];
+                            const valB = matrixB[k][j];
+                            sum += valA * valB;
+                            formulaParts.push(`(${valA} * ${valB})`);
+                        }
+                        
+                        formulaText += formulaParts.join(' + ');
+                        formulaText += ` = <strong>${sum}</strong>`;
+                        
+                        // 🎨 Añadir la fórmula de texto debajo
+                        stepsHtml += `<div class="step-formula">${formulaText}</div>`;
+                        
+                        stepsHtml += `</div>`; // Fin de .step-calculation
+                        
+                        resultRow.push(sum);
+                    }
+                    resultMatrix.push(resultRow);
+                }
+                
+                renderResult(resultMatrix);
+                renderSteps(stepsHtml);
+            }
+
+
+            // --- Asignación de Eventos ---
+            el.generateBtn.addEventListener('click', generateGrids);
+            el.opAdd.addEventListener('click', performAddition);
+            el.opSubtract.addEventListener('click', performSubtraction);
+            el.opMultiply.addEventListener('click', performMultiplication);
+
+            // --- Inicialización ---
+            generateGrids(); // Generar los grids iniciales (2x2) al cargar la página
+            el.resultSection.classList.remove('visible'); // Ocultar secciones de resultado al inicio
+            el.stepsSection.classList.remove('visible');
+
+        });
+    </script>
+</body>
+</html>

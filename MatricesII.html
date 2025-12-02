@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrices II: Conceptos Avanzados</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* =========================================
+           1. ESTILOS GENERALES (TEMA)
+           ========================================= */
+        * { box-sizing: border-box; }
+
+        :root {
+            --bg-base: #0d0c1b;
+            --card-bg: rgba(28, 28, 30, 0.94);
+            --text: #f5f5f7;
+            --muted: #b6b6bb;
+            --accent1: #9b5de5; /* Púrpura (Principal) */
+            --accent2: #00d2ff; /* Cian (Secundario) */
+            --border-color: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text);
+            background-color: var(--bg-base);
+            padding: 50px 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            background-image:
+                radial-gradient(circle 800px at 10% 20%, #7b2cbf 0%, transparent 40%),
+                radial-gradient(circle 600px at 90% 80%, #00d2ff 0%, transparent 40%),
+                conic-gradient(from 180deg at 50% 50%, rgba(255,255,255,0.03) 0deg, transparent 360deg);
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        .sheet {
+            width: min(1400px, 96vw);
+            background: rgba(30, 30, 35, 0.7);
+            border-radius: 30px;
+            padding: 40px;
+            backdrop-filter: blur(25px) saturate(120%);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 50px; border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; }
+        .title { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 4vw, 3.5rem); margin: 0; background: linear-gradient(to right, #fff, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { color: var(--muted); font-style: italic; margin-top: 10px; font-size: 1.1rem; }
+
+        /* Layout */
+        .page-layout { display: grid; grid-template-columns: 260px 1fr; gap: 50px; }
+        .sidebar { position: sticky; top: 40px; align-self: start; }
+        .sidebar-nav { list-style: none; padding: 0; }
+        .sidebar-nav a {
+            display: block; padding: 12px 15px; text-decoration: none; color: var(--muted);
+            font-weight: 600; border-radius: 10px; transition: 0.3s; border-left: 3px solid transparent;
+            margin-bottom: 5px;
+        }
+        .sidebar-nav a:hover { background: rgba(255,255,255,0.05); color: white; transform: translateX(5px); }
+        .sidebar-nav a.active { color: var(--accent2); background: rgba(0, 210, 255, 0.1); border-left-color: var(--accent2); }
+
+        /* Secciones */
+        .content-section { display: none; animation: fadeIn 0.5s ease; }
+        .content-section.active { display: block; }
+        h2 { font-family: 'Playfair Display', serif; color: var(--accent2); font-size: 2rem; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
+        p { line-height: 1.8; font-size: 1.05rem; color: #e0e0e0; margin-bottom: 25px; }
+
+
+        /* =========================================
+           2. ESTILOS SECCIÓN 1: DETERMINANTES
+           ========================================= */
+        .det-dashboard {
+            display: grid;
+            grid-template-columns: 1.3fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .det-calc-box {
+            background: rgba(20, 20, 25, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .box-header {
+            width: 100%; text-align: center; text-transform: uppercase;
+            font-size: 0.85rem; letter-spacing: 2px; color: var(--muted);
+            border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 20px;
+        }
+
+        .matrix-cross-visual {
+            display: flex; align-items: center; gap: 20px; margin-bottom: 20px;
+            flex-wrap: wrap; justify-content: center;
+        }
+
+        .det-matrix-wrapper { position: relative; display: flex; align-items: center; padding: 0 10px; }
+        .det-bar { font-size: 5rem; font-weight: 300; line-height: 0.8; color: rgba(255,255,255,0.2); }
+
+        .det-inputs {
+            display: grid; grid-template-columns: repeat(2, 60px); gap: 15px; padding: 10px;
+        }
+        .det-in {
+            width: 100%; height: 50px; background: rgba(255,255,255,0.05);
+            border: 1px solid transparent; border-radius: 8px;
+            color: white; font-family: 'Fira Code', monospace; font-size: 1.2rem;
+            text-align: center; z-index: 2; position: relative;
+        }
+        .det-in:focus { outline: none; background: rgba(255,255,255,0.15); }
+
+        .main-d { border-bottom: 3px solid rgba(155, 93, 229, 0.5); }
+        .sec-d { border-bottom: 3px solid rgba(0, 210, 255, 0.5); }
+
+        .cross-svg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1; opacity: 0.5;
+        }
+        .arrow-main { stroke: var(--accent1); stroke-width: 2; }
+        .arrow-sec { stroke: var(--accent2); stroke-width: 2; }
+
+        .calc-flow { display: flex; flex-direction: column; gap: 10px; justify-content: center; min-width: 140px; }
+        .flow-step {
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px;
+            border-left: 3px solid #555; font-size: 0.9rem; display: flex; flex-direction: column;
+        }
+        .main-step { border-color: var(--accent1); }
+        .sec-step { border-color: var(--accent2); }
+        .flow-step .label { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; margin-bottom: 2px; }
+        .flow-step .math { font-family: 'Fira Code', monospace; font-weight: bold; }
+
+        .op-minus, .op-equals { text-align: center; color: var(--muted); font-weight: bold; font-size: 1.2rem; line-height: 0.5; }
+
+        .flow-result {
+            text-align: center; font-size: 1.8rem; font-weight: bold; color: #fff;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; margin-top: 5px;
+        }
+
+        .formula-caption {
+            font-size: 1.1rem; margin-top: 10px; padding-top: 10px;
+            border-top: 1px dashed rgba(255,255,255,0.1); width: 100%; text-align: center;
+        }
+
+        .det-geo-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 25px; display: flex; flex-direction: column;
+        }
+        .geo-stage {
+            flex-grow: 1; display: flex; justify-content: center; align-items: center;
+            margin-bottom: 20px; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 20px;
+        }
+        .shape-container { display: flex; align-items: center; gap: 20px; }
+
+        .shape {
+            width: 60px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 0.7rem; position: relative; border: 2px solid white; transition: all 0.5s ease;
+        }
+        .square { background: rgba(255,255,255,0.1); border-color: var(--muted); }
+        .parallelogram {
+            background: rgba(155, 93, 229, 0.2); border-color: var(--accent1);
+            transform: skew(-10deg) scale(1.1);
+        }
+        .shape-label { position: absolute; bottom: -25px; white-space: nowrap; color: var(--muted); font-size: 0.7rem; }
+        .transform-arrow { font-size: 1.5rem; color: var(--muted); }
+
+        .det-meaning-list { display: flex; flex-direction: column; gap: 10px; }
+        .meaning-item { display: flex; gap: 10px; font-size: 0.85rem; padding: 10px; border-radius: 8px; align-items: center; line-height: 1.4; }
+        .ok { background: rgba(0, 255, 0, 0.1); border: 1px solid rgba(0, 255, 0, 0.2); }
+        .ok .status-icon { color: #00ff00; }
+        .danger { background: rgba(255, 50, 50, 0.1); border: 1px solid rgba(255, 50, 50, 0.2); }
+        .danger .status-icon { color: #ff3232; }
+        .status-icon { font-weight: bold; font-size: 1.1rem; }
+
+
+        /* =========================================
+           3. ESTILOS SECCIÓN 2: SISTEMAS
+           ========================================= */
+        .system-transform-container {
+            display: flex; align-items: center; justify-content: center; gap: 20px; margin: 40px 0; flex-wrap: wrap;
+        }
+        .sys-card {
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 16px;
+            padding: 30px 25px; min-width: 280px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .card-label {
+            position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #1a1a20;
+            border: 1px solid var(--border-color); padding: 2px 12px; font-size: 0.75rem; color: var(--muted);
+            border-radius: 10px; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap;
+        }
+        .equation-row { font-family: 'Times New Roman', serif; font-size: 1.4rem; margin-bottom: 10px; text-align: center; }
+        .coef-a, .coef-c { color: var(--accent1); font-weight: bold; }
+        .coef-b, .coef-d { color: var(--accent2); font-weight: bold; }
+        .res-1, .res-2 { color: #fff; font-weight: bold; border-bottom: 1px dashed #555; }
+        .transform-arrow { color: var(--muted); font-weight: bold; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; margin: 0 10px; }
+        
+        .matrix-eq-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
+        .m-wrap { display: flex; align-items: center; }
+        .m-col { display: flex; flex-direction: column; gap: 10px; text-align: right; padding: 0 5px; font-family: 'Fira Code', monospace; font-size: 1.2rem; }
+        .bracket { font-size: 3rem; font-weight: 300; line-height: 0.8; color: rgba(255,255,255,0.3); }
+        .eq-sign { font-size: 2rem; color: var(--muted); margin: 0 5px; }
+
+        .methods-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .method-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; transition: transform 0.2s; }
+        .method-card:hover { transform: translateY(-5px); border-color: var(--accent2); }
+        .method-card h4 { margin: 0 0 10px 0; color: var(--accent2); font-size: 1.1rem; }
+        .method-card.highlight { border-color: var(--accent1); background: rgba(155, 93, 229, 0.05); }
+
+
+        /* =========================================
+           4. ESTILOS SECCIÓN 3: EIGEN
+           ========================================= */
+        .eigen-hero-box {
+            background: radial-gradient(circle at center, rgba(155, 93, 229, 0.2) 0%, transparent 80%);
+            border: 1px solid var(--border-color); border-radius: 20px; padding: 40px; text-align: center; margin: 30px 0;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+        .eigen-formula { font-size: clamp(1.5rem, 3vw, 2.5rem); color: white; margin-bottom: 30px; text-shadow: 0 0 20px var(--accent1); }
+        .eigen-explanation { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .eigen-part { background: rgba(0,0,0,0.6); padding: 12px 25px; border-radius: 50px; border: 1px solid var(--border-color); font-size: 0.95rem; color: #ddd; }
+        .eigen-part strong { color: var(--accent2); }
+        .analogy-box { background: rgba(255, 193, 7, 0.05); border-left: 4px solid #ffc107; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .analogy-box strong { color: #ffc107; display: block; margin-bottom: 10px; font-size: 1.1rem; }
+
+
+        /* =========================================
+           5. ESTILOS SECCIÓN 4: APLICACIONES
+           ========================================= */
+        .app-grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 30px; }
+        .app-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; display: flex; gap: 20px; align-items: flex-start; transition: all 0.3s ease; }
+        .app-card:hover { transform: translateY(-5px); background: rgba(255,255,255,0.05); border-color: var(--accent2); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .app-icon { font-size: 2rem; background: rgba(255,255,255,0.05); min-width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .app-content h4 { margin: 0 0 8px 0; color: #fff; font-size: 1.1rem; }
+        .app-content p { font-size: 0.9rem; color: var(--muted); margin: 0; line-height: 1.5; }
+        
+        .graphics-card:hover { border-color: #ff6b6b; } .graphics-card .app-icon { color: #ff6b6b; box-shadow: 0 0 15px rgba(255, 107, 107, 0.1); }
+        .ai-card:hover { border-color: #00d2ff; } .ai-card .app-icon { color: #00d2ff; box-shadow: 0 0 15px rgba(0, 210, 255, 0.1); }
+        .data-card:hover { border-color: #feca57; } .data-card .app-icon { color: #feca57; box-shadow: 0 0 15px rgba(254, 202, 87, 0.1); }
+        .crypto-card:hover { border-color: #1dd1a1; } .crypto-card .app-icon { color: #1dd1a1; box-shadow: 0 0 15px rgba(29, 209, 161, 0.1); }
+
+        @media (max-width: 900px) {
+            .page-layout { grid-template-columns: 1fr; }
+            .det-dashboard { grid-template-columns: 1fr; }
+            .matrix-cross-visual { flex-direction: column; }
+            .det-inputs { grid-template-columns: repeat(2, 50px); }
+            .det-in { height: 40px; font-size: 1rem; }
+            .system-transform-container { flex-direction: column; }
+            .transform-arrow { transform: rotate(90deg); margin: 15px 0; }
+            .app-card { flex-direction: column; text-align: center; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sheet">
+    <header class="header">
+        <h1 class="title">Matrices II: El Motor Matemático</h1>
+        <p class="subtitle">De resolver ecuaciones simples a transformar el espacio-tiempo en gráficos 3D e IA.</p>
+    </header>
+
+    <div class="page-layout">
+        <aside class="sidebar">
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="#m2-1">1. El Determinante</a></li>
+                    <li><a href="#m2-2">2. Sistemas Lineales</a></li>
+                    <li><a href="#m2-3">3. Autovalores (Eigen)</a></li>
+                    <li><a href="#m2-4">4. Aplicaciones Reales</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <section id="m2-1" class="content-section">
+            <h2>1. El Determinante: El Factor de Escala</h2>
+            <p>El determinante es un número mágico que nos dice cuánto "estira" o "aplasta" el espacio una matriz. Si es 0, el espacio colapsa (pierde dimensiones) y la matriz no tiene inversa.</p>
+
+            <div class="det-dashboard">
+                <div class="det-calc-box">
+                    <div class="box-header">Calculadora Visual (Producto Cruz)</div>
+                    <div class="matrix-cross-visual">
+                        <div class="det-matrix-wrapper">
+                            <div class="det-bar">|</div>
+                            <div class="det-inputs">
+                                <input type="number" value="3" class="det-in main-d" id="d11" oninput="calcDet()">
+                                <input type="number" value="1" class="det-in sec-d" id="d12" oninput="calcDet()">
+                                <input type="number" value="2" class="det-in sec-d" id="d21" oninput="calcDet()">
+                                <input type="number" value="4" class="det-in main-d" id="d22" oninput="calcDet()">
+                            </div>
+                            <div class="det-bar">|</div>
+                            <svg class="cross-svg" viewBox="0 0 100 100">
+                                <line x1="15" y1="15" x2="85" y2="85" class="arrow-main" marker-end="url(#arrowhead-main)" />
+                                <line x1="85" y1="15" x2="15" y2="85" class="arrow-sec" marker-end="url(#arrowhead-sec)" />
+                                <defs>
+                                    <marker id="arrowhead-main" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#9b5de5" /></marker>
+                                    <marker id="arrowhead-sec" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#00d2ff" /></marker>
+                                </defs>
+                            </svg>
+                        </div>
+                        <div class="calc-flow">
+                            <div class="flow-step main-step">
+                                <span class="label">Diagonal Principal (+)</span>
+                                <span class="math" id="step-main">(3)(4) = 12</span>
+                            </div>
+                            <div class="op-minus">-</div>
+                            <div class="flow-step sec-step">
+                                <span class="label">Diagonal Secundaria (-)</span>
+                                <span class="math" id="step-sec">(1)(2) = 2</span>
+                            </div>
+                            <div class="op-equals">=</div>
+                            <div class="flow-result" id="det-result">10</div>
+                        </div>
+                    </div>
+                    <div class="formula-caption">$$ \det(A) = \color{#9b5de5}{(ad)} - \color{#00d2ff}{(bc)} $$</div>
+                </div>
+
+                <div class="det-geo-card">
+                    <div class="box-header">Interpretación Geométrica</div>
+                    <div class="geo-stage">
+                        <div class="shape-container">
+                            <div class="shape square"><span>Area = 1</span><div class="shape-label">Original</div></div>
+                            <div class="transform-arrow">➜</div>
+                            <div class="shape parallelogram" id="geo-shape"><span id="geo-area-text">Area = 10</span><div class="shape-label">Transformado</div></div>
+                        </div>
+                    </div>
+                    <div class="det-meaning-list">
+                        <div class="meaning-item ok" id="status-invertible"><span class="status-icon">✓</span><div><strong>Det ≠ 0:</strong> El área existe. Tiene Inversa.</div></div>
+                        <div class="meaning-item danger" id="status-singular" style="display:none;"><span class="status-icon">⚠️</span><div><strong>Det = 0:</strong> El área colapsa. Matriz Singular.</div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="m2-2" class="content-section">
+            <h2>2. Sistemas de Ecuaciones Lineales</h2>
+            <p>Convertimos el caos algebraico en una estructura ordenada \(Ax = B\).</p>
+            <div class="system-transform-container">
+                <div class="sys-card algebra-view">
+                    <div class="card-label">Mundo Algebraico</div>
+                    <div class="equation-row"><span class="coef-a">2</span>x + <span class="coef-b">3</span>y = <span class="res-1">5</span></div>
+                    <div class="equation-row"><span class="coef-c">4</span>x - <span class="coef-d">1</span>y = <span class="res-2">3</span></div>
+                </div>
+                <div class="transform-arrow">➔ Se convierte en ➔</div>
+                <div class="sys-card matrix-view">
+                    <div class="card-label">Mundo Matricial (\(Ax=B\))</div>
+                    <div class="matrix-eq-row">
+                        <div class="m-wrap"><span class="bracket">[</span><div class="m-col"><span class="coef-a">2</span><span class="coef-c">4</span></div><div class="m-col"><span class="coef-b">3</span><span class="coef-d">-1</span></div><span class="bracket">]</span></div>
+                        <div class="m-wrap x-vec"><span class="bracket">[</span><div class="m-col">x<br>y</div><span class="bracket">]</span></div>
+                        <span class="eq-sign">=</span>
+                        <div class="m-wrap res-vec"><span class="bracket">[</span><div class="m-col"><span class="res-1">5</span><span class="res-2">3</span></div><span class="bracket">]</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="methods-grid">
+                <div class="method-card"><h4>Gauss-Jordan</h4><p>Manipula las filas para llegar a la Identidad.</p></div>
+                <div class="method-card"><h4>Regla de Cramer</h4><p>Usa determinantes. Bueno para sistemas pequeños.</p></div>
+                <div class="method-card highlight"><h4>La Inversa</h4><p>Despeja \(X\) multiplicando por \(A^{-1}\).</p></div>
+            </div>
+        </section>
+
+        <section id="m2-3" class="content-section">
+            <h2>3. Autovalores y Autovectores (Eigen)</h2>
+            <p>Vectores especiales que <strong>no giran</strong>, solo se estiran o encogen bajo la transformación.</p>
+            <div class="eigen-hero-box">
+                <div class="eigen-formula">$$ A \cdot \mathbf{v} = \lambda \cdot \mathbf{v} $$</div>
+                <div class="eigen-explanation">
+                    <div class="eigen-part"><strong>\(\mathbf{v}\) (Autovector):</strong> Dirección fija (Eje de rotación).</div>
+                    <div class="eigen-part"><strong>\(\lambda\) (Autovalor):</strong> Factor de estiramiento.</div>
+                </div>
+            </div>
+            <div class="analogy-box">
+                <strong>💡 Analogía:</strong> Al estirar una goma elástica, la mayoría de puntos se mueven, pero la línea central del estiramiento solo se alarga. Ese es el Autovector.
+            </div>
+        </section>
+
+        <section id="m2-4" class="content-section">
+            <h2>4. Aplicaciones Reales</h2>
+            <div class="app-grid-container">
+                <div class="app-card graphics-card"><div class="app-icon">🎮</div><div class="app-content"><h4>Gráficos 3D</h4><p>Matrices de transformación 4x4 para mover y rotar mundos virtuales.</p></div></div>
+                <div class="app-card ai-card"><div class="app-icon">🧠</div><div class="app-content"><h4>Inteligencia Artificial</h4><p>Las redes neuronales son multiplicaciones masivas de matrices de "pesos".</p></div></div>
+                <div class="app-card data-card"><div class="app-icon">🌐</div><div class="app-content"><h4>Google PageRank</h4><p>Usa autovectores para determinar la importancia de una web en la red.</p></div></div>
+                <div class="app-card crypto-card"><div class="app-icon">🔒</div><div class="app-content"><h4>Criptografía</h4><p>Algoritmos de cifrado basados en matrices inversas modulares.</p></div></div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICA DE NAVEGACIÓN ---
+    const navLinks = document.querySelectorAll('.sidebar-nav a');
+    const sections = document.querySelectorAll('.content-section');
+
+    function showSection(id) {
+        const cleanId = id.replace('#', '');
+        sections.forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(cleanId);
+        if(target) target.classList.add('active');
+        
+        navLinks.forEach(l => {
+            l.classList.remove('active');
+            if(l.getAttribute('href') === id) l.classList.add('active');
+        });
+    }
+
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            showSection(link.getAttribute('href'));
+        });
+    });
+    showSection('#m2-1');
+
+    // --- LÓGICA DE DETERMINANTES (SECCIÓN 1) ---
+    function calcDet() {
+        const a = parseFloat(document.getElementById('d11').value) || 0;
+        const b = parseFloat(document.getElementById('d12').value) || 0;
+        const c = parseFloat(document.getElementById('d21').value) || 0;
+        const d = parseFloat(document.getElementById('d22').value) || 0;
+
+        const mainProd = a * d;
+        const secProd = b * c;
+        const det = mainProd - secProd;
+
+        // Actualizar Pasos
+        document.getElementById('step-main').innerText = `(${a})(${d}) = ${mainProd}`;
+        document.getElementById('step-sec').innerText = `(${b})(${c}) = ${secProd}`;
+        document.getElementById('det-result').innerText = det;
+
+        // Actualizar Gráfico Geométrico (Simulación visual)
+        const areaText = document.getElementById('geo-area-text');
+        const shape = document.getElementById('geo-shape');
+        const statusOk = document.getElementById('status-invertible');
+        const statusErr = document.getElementById('status-singular');
+
+        areaText.innerText = `Area = ${Math.abs(det)}`;
+        
+        if (det === 0) {
+            shape.style.transform = "scaleY(0.1) skew(40deg)";
+            shape.style.background = "rgba(255, 50, 50, 0.2)";
+            shape.style.borderColor = "#ff3232";
+            statusOk.style.display = 'none';
+            statusErr.style.display = 'flex';
+        } else {
+            const scale = Math.min(Math.max(Math.abs(det) / 5, 0.5), 1.5); 
+            shape.style.transform = `scale(${scale}) skew(-10deg)`;
+            shape.style.background = "rgba(155, 93, 229, 0.2)";
+            shape.style.borderColor = "var(--accent1)";
+            statusOk.style.display = 'flex';
+            statusErr.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>

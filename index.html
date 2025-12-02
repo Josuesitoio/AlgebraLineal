@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Álgebra Lineal - Apuntes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes backgroundAnimation {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+        @keyframes orbMovement {
+            0% { transform: translate(0, 0) scale(1); }
+            25% { transform: translate(20px, -20px) scale(1.05); }
+            50% { transform: translate(0, 20px) scale(1); }
+            75% { transform: translate(-20px, -10px) scale(0.95); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        *{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:Montserrat,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111}
+
+        :root{
+            --bg-1: #f4f5f7;
+            --bg-2: #e5e7eb;
+            --bg-fallback: #e5e7eb;
+            --card: rgba(255, 255, 255, 0.7);
+            --card-fallback: #ffffff;
+            --text: #111827;
+            --muted: #6b7280;
+            --accent1: #F97316; /* Vibrant Orange */
+            --accent2: #EA580C; /* Darker Orange */
+            --gold: #FB923C;   /* Lighter Orange */
+            --glass-blur: 14px;
+        }
+        @media (prefers-color-scheme: dark){
+            :root{
+                --bg-1: #111827;
+                --bg-2: #1f2937;
+                --bg-fallback: #111827;
+                --card: rgba(31, 41, 55, 0.7);
+                --card-fallback: #1f2937;
+                --text: #f9fafb;
+                --muted: #9ca3af;
+                --accent1: #FB923C; /* Lighter Orange for dark mode */
+                --accent2: #F97316; /* Vibrant Orange for dark mode hover */
+                --gold: #FDBA74;   /* Pale Orange for dark mode */
+                --glass-blur: 12px;
+            }
+        }
+
+        body{
+            background-color: var(--bg-fallback);
+            background-image: radial-gradient(1200px 600px at 10% 10%, var(--bg-2) 0%, transparent 40%),
+                              radial-gradient(1000px 500px at 90% 90%, rgba(255, 255, 255, 0.1) 0%, transparent 25%),
+                              linear-gradient(160deg,var(--bg-1),transparent 60%);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-size: 250% 250%;
+            animation: backgroundAnimation 35s ease infinite alternate;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            display:flex;align-items:flex-start;justify-content:center;padding:48px 20px;
+            min-height: 100vh;
+        }
+
+        .sheet{
+            width:min(1100px,96vw);
+            background: var(--card);
+            border-radius:24px;
+            padding:48px 40px;
+            -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+            backdrop-filter: blur(var(--glass-blur)) saturate(1.2);
+            box-shadow: 0 15px 45px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05);
+            position:relative;overflow:hidden;
+            border:1px solid rgba(255,255,255,0.1);
+            animation: fadeIn 1s ease-out;
+            margin: 50px 0;
+        }
+        
+        .sheet::before{
+            content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(0,0,0,0.02) 1px, transparent 1px);background-size:5px 5px;opacity:0.5;
+        }
+
+        .header{
+            display:flex;flex-direction:column;align-items:center;margin-bottom:40px;gap:8px;
+        }
+        .title{
+            font-family:'Playfair Display',serif;font-size:3.8rem;line-height:1;color:var(--text);font-weight:700;letter-spacing:0.4px;position:relative;display:inline-block;padding:8px 16px 0 16px;text-align:center;
+        }
+        .subtitle{font-style:italic;color:var(--muted);font-size:1.15rem;text-align:center;max-width: 600px;}
+        .home-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: var(--accent1);
+            color: white;
+            border-radius: 999px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+        .home-link:hover {
+            transform: scale(1.05);
+            background-color: var(--accent2);
+            color: white;
+        }
+
+        .brush-wrap{position:absolute;left:50%;transform:translateX(-50%);top:85px;width:500px;pointer-events:none}
+        svg.brush{width:100%;height:40px;overflow:visible}
+        path.stroke{fill:none;stroke:var(--accent1);stroke-width:8;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1000;stroke-dashoffset:1000;filter:drop-shadow(0 8px 10px rgba(249, 115, 22, 0.15));animation: drawBrush 2s ease-out 0.5s forwards;}
+        @media (prefers-color-scheme: dark){path.stroke{stroke:var(--accent2); filter:drop-shadow(0 8px 10px rgba(251, 146, 60, 0.2));}}
+
+        @keyframes drawBrush {
+            to { stroke-dashoffset: 0; }
+        }
+
+        .content{
+            display:flex;
+            flex-direction:column;
+            gap:40px;
+        }
+
+        .section {
+            background: rgba(0,0,0,0.03);
+            border-radius: 18px;
+            padding: 30px;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeIn 0.8s ease-out forwards;
+            border: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        @media (prefers-color-scheme: dark){
+            .section { background: rgba(255,255,255,0.03); }
+        }
+        
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            color: var(--accent1);
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px dashed var(--accent2);
+            display: inline-block;
+        }
+
+        .section p, .section ul {
+            font-size: 1.1rem;
+            color: var(--text);
+            line-height: 1.7;
+            max-width: 80ch;
+            flex-grow: 1;
+        }
+        .section ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .section li {
+            padding-left: 1.5em;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        .section li::before {
+            content: '▶';
+            position: absolute;
+            left: 0;
+            font-size: 0.8em;
+            top: 0.3em;
+            color: var(--accent1);
+        }
+        .highlight {
+            font-weight: 600;
+            color: var(--gold);
+        }
+
+        .details-btn {
+            display: inline-block;
+            margin-top: 25px;
+            padding: 12px 24px;
+            background-color: rgba(0,0,0,0.05);
+            color: var(--accent1);
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+            align-self: flex-start;
+        }
+        @media (prefers-color-scheme: dark){
+            .details-btn { background-color: rgba(255,255,255,0.08); }
+        }
+
+        .details-btn:hover {
+            background-color: var(--accent1);
+            color: white;
+            transform: translateY(-3px);
+        }
+        
+        .orb{position:absolute;border-radius:999px;mix-blend-mode:hard-light;opacity:.15;filter:blur(40px);pointer-events:none;animation: orbMovement 25s infinite ease-in-out alternate;}
+        .orb.one{width:300px;height:300px;right:-80px;top:-60px;background:var(--accent1);animation-delay: 0s;}
+        .orb.two{width:200px;height:200px;left:-80px;bottom:-80px;background:var(--gold);animation-delay: 5s;}
+        .orb.three{width:350px;height:350px;left:25%;top:15%;background:var(--accent2);animation-delay: 10s;}
+
+        @media (max-width:900px){
+            .sheet{padding:30px 20px;}
+            .title{font-size:2.8rem}
+            .brush-wrap{top:70px;width:350px}
+            .section-title{font-size: 1.8rem;}
+            .section p, .section ul {font-size: 1rem;}
+        }
+
+        @media (max-width:500px){
+            .title{font-size:2.2rem}
+            .brush-wrap{top:60px;width:280px}
+            body{padding:20px 10px;}
+            .details-btn{align-self: stretch; text-align: center;}
+        }
+
+        @media (prefers-reduced-motion: reduce){
+            body, .sheet, .section, .orb, path.stroke {animation: none;}
+            .sheet, .section {opacity: 1; transform: none;}
+            path.stroke {stroke-dashoffset: 0;}
+            .details-btn:hover {transform: none;}
+        }
+    </style>
+</head>
+<body>
+    <div class="sheet">
+        <div class="orb one"></div>
+        <div class="orb two"></div>
+        <div class="orb three"></div>
+
+        <header class="header">
+            <h1 class="title">Álgebra Lineal</h1>
+            <div class="brush-wrap">
+                <svg class="brush" viewBox="0 0 500 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path class="stroke" d="M10 28C10 28 147.5 13.5 250 13.5C352.5 13.5 490 28 490 28" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+            <p class="subtitle">El estudio de vectores, matrices, espacios vectoriales y transformaciones lineales que forman la base para la computación gráfica, el análisis de datos y mucho más.</p>
+            <a href="Calculadora.html" class="home-link">Calculadora</a>
+        </header>
+
+        <main class="content">
+            <section class="section" style="animation-delay: 0.2s;">
+                <div>
+                    <h2 class="section-title">Números Complejos I: Fundamentos</h2>
+                    <p>Los números complejos extienden el concepto de números reales. Son fundamentales en diversas áreas de la ingeniería y la física. Su definición y formas de representación son el primer paso para dominarlos.</p>
+                    <ul>
+                        <li><strong>Definición:</strong> Un número complejo `z` se define como `z = a + bi`, donde `a` es la parte real y `b` es la parte imaginaria.</li>
+                        <li><strong>Unidad Imaginaria:</strong> `i` se define como la raíz cuadrada de -1 (`i² = -1`).</li>
+                        <li><strong>Plano Complejo:</strong> Se representan visualmente en un plano con un eje real (horizontal) y un eje imaginario (vertical).</li>
+                        <li><strong>Módulo y Argumento:</strong> El <span class="highlight">módulo `|z|`</span> es la distancia desde el origen al punto, y el <span class="highlight">argumento `Arg(z)`</span> es el ángulo que forma con el eje real.</li>
+                        <li><strong>Formas de Representación:</strong> Además de la forma binómica (`a+bi`), existen la forma <span class="highlight">polar</span>, <span class="highlight">trigonométrica</span> y la <span class="highlight">exponencial</span> (Fórmula de Euler: `e^(iθ) = cos(θ) + i sin(θ)`).</li>
+                    </ul>
+                </div>
+                <a href="NumerosComplejos.html" class="details-btn">Más Detalles →</a>
+            </section>
+
+            <section class="section" style="animation-delay: 0.4s;">
+                <div>
+                    <h2 class="section-title">Números Complejos II: Operaciones</h2>
+                    <p>Las operaciones con números complejos permiten resolver problemas que serían imposibles en el dominio de los números reales.</p>
+                    <ul>
+                        <li><strong>Operaciones Básicas:</strong> Suma, resta, producto y cociente. El <span class="highlight">conjugado</span> (`a - bi`) es clave para la división.</li>
+                        <li><strong>Potenciación:</strong> La <span class="highlight">Fórmula de De Moivre</span> es una herramienta poderosa para calcular potencias de números complejos en su forma polar.</li>
+                        <li><strong>Radicación:</strong> Permite encontrar las `n` raíces n-ésimas de un número complejo, las cuales forman un polígono regular en el plano complejo.</li>
+                        <li><strong>Aplicaciones en Ingeniería y Software:</strong> Se usan en el procesamiento de señales (transformada de Fourier), teoría de control, electromagnetismo, y en programación para fractales, simulaciones físicas y análisis de algoritmos en redes.</li>
+                    </ul>
+                </div>
+                <a href="NumerosComplejosII.html" class="details-btn">Más Detalles →</a>
+            </section>
+            
+            <section class="section" style="animation-delay: 0.6s;">
+                <div>
+                    <h2 class="section-title">Matrices I: Definiciones y Tipos</h2>
+                    <p>Una matriz es un arreglo rectangular de números, símbolos o expresiones, dispuestos en filas y columnas. Son una de las herramientas más potentes del álgebra lineal.</p>
+                    <ul>
+                        <li><strong>Definición:</strong> Una matriz `A` de dimensión `m x n` tiene `m` filas y `n` columnas.</li>
+                        <li><strong>Tipos Fundamentales:</strong> Matriz cuadrada, fila, columna, nula, diagonal, <span class="highlight">identidad</span> (con 1s en la diagonal y 0s en el resto), escalar, simétrica, y triangular (superior o inferior).</li>
+                        <li><strong>Operaciones Clave:</strong> La <span class="highlight">matriz traspuesta</span> (intercambiar filas por columnas) y la <span class="highlight">matriz inversa</span> (si existe, `A·A⁻¹ = I`).</li>
+                        <li><strong>Operaciones Básicas:</strong> Suma y resta de matrices (deben tener la misma dimensión), producto por un escalar y el <span class="highlight">producto de matrices</span> (una operación más compleja pero fundamental).</li>
+                   </ul>
+                </div>
+                <a href="MatricesI.html" class="details-btn">Más Detalles →</a>
+            </section>
+            
+            <section class="section" style="animation-delay: 0.8s;">
+                <div>
+                    <h2 class="section-title">Matrices II: Conceptos y Aplicaciones</h2>
+                    <p>Más allá de las operaciones básicas, las matrices permiten modelar y resolver sistemas complejos de ecuaciones, así como describir transformaciones geométricas.</p>
+                     <ul>
+                        <li><strong>Determinante:</strong> Un valor escalar especial que se puede calcular a partir de una matriz cuadrada. Si el determinante es cero, la matriz no tiene inversa.</li>
+                        <li><strong>Sistemas de Ecuaciones Lineales:</strong> Las matrices son la herramienta principal para resolverlos, usando métodos como la <span class="highlight">eliminación de Gauss-Jordan</span> o la <span class="highlight">Regla de Cramer</span>.</li>
+                        <li><strong>Autovalores y Autovectores:</strong> Representan la dirección en la que una transformación lineal simplemente "estira" o "comprime" el espacio. Son cruciales en el análisis de datos (PCA), mecánica cuántica y sistemas dinámicos.</li>
+                        <li><strong>Aplicaciones:</strong> En <span class="highlight">programación</span>, se usan para gráficos 3D (rotaciones, traslaciones), redes de grafos, compresión de imágenes, machine learning (redes neuronales) y optimización de recursos.</li>
+                    </ul>
+                </div>
+                <a href="MatricesII.html" class="details-btn">Más Detalles →</a>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

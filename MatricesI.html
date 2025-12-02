@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrices I: Fundamentos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Playfair+Display:wght@700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+/* =========================================
+   ESTILOS BASE (Heredados del Tema Anterior)
+   ========================================= */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulseGlow { 0% { box-shadow: 0 0 5px var(--accent2); } 50% { box-shadow: 0 0 20px var(--accent2); } 100% { box-shadow: 0 0 5px var(--accent2); } }
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; font-family: 'Montserrat', sans-serif; color: #f5f5f7; background-color: #0d0c1b;
+  padding: 50px 20px; display: flex; justify-content: center; min-height: 100vh;
+  background-image:
+    radial-gradient(circle 800px at 10% 20%, #9b5de5 0%, transparent 40%),
+    radial-gradient(circle 700px at 90% 80%, #00d2ff 0%, transparent 40%),
+    conic-gradient(from 180deg at 50% 50%, rgba(255,255,255,0.05) 0deg, transparent 360deg);
+  background-attachment: fixed; background-size: cover;
+}
+
+:root {
+  --card: rgba(28,28,30,0.94);
+  --text: #f5f5f7; --muted: #b6b6bb;
+  --accent1: #9b5de5; /* Púrpura */
+  --accent2: #00d2ff; /* Cian */
+  --border-color: rgba(255,255,255,0.12);
+  --code-bg: #151516;
+}
+
+.sheet {
+  width: min(1400px, 96vw); background: var(--card); border-radius: 30px; padding: 40px;
+  backdrop-filter: blur(20px); border: 1px solid var(--border-color);
+  animation: fadeIn 0.8s ease-out;
+}
+
+.header { text-align: center; margin-bottom: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 20px; }
+.title { font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 4vw, 3.5rem); margin: 0; background: linear-gradient(to right, #fff, var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.subtitle { color: var(--muted); font-style: italic; margin-top: 10px; font-size: 1.1rem; }
+
+.page-layout { display: grid; grid-template-columns: 260px 1fr; gap: 45px; }
+
+/* Sidebar */
+.sidebar { position: sticky; top: 40px; align-self: start; }
+.sidebar-nav { list-style: none; padding: 0; }
+.sidebar-nav a {
+  display: block; padding: 12px 15px; text-decoration: none; color: var(--muted);
+  font-weight: 600; border-radius: 10px; transition: 0.2s; border-left: 3px solid transparent;
+}
+.sidebar-nav a:hover { background: rgba(255,255,255,0.05); color: white; }
+.sidebar-nav a.active { color: var(--accent2); background: rgba(0, 210, 255, 0.1); border-left-color: var(--accent2); }
+
+/* Secciones */
+.content-section { display: none; }
+.content-section.active { display: block; animation: fadeIn 0.5s ease; }
+h2 { font-family: 'Playfair Display', serif; color: var(--accent2); font-size: 2rem; margin-bottom: 20px; }
+p { line-height: 1.8; font-size: 1.05rem; color: #e0e0e0; margin-bottom: 20px; }
+
+/* --- VISUALIZADOR DE MATRIZ (CSS PURO) --- */
+.matrix-visual-container {
+    display: flex; gap: 30px; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.3); padding: 30px; border-radius: 20px; margin: 30px 0;
+    border: 1px solid var(--border-color); position: relative;
+}
+.matrix-bracket {
+    font-size: 8rem; font-weight: 300; color: var(--muted); line-height: 0.8;
+}
+.matrix-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
+}
+.m-cell {
+    width: 60px; height: 60px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border-color);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Fira Code'; font-size: 1.2rem; border-radius: 8px;
+    transition: 0.3s; position: relative;
+}
+.m-cell:hover { background: var(--accent2); color: black; transform: scale(1.1); box-shadow: 0 0 15px var(--accent2); z-index: 10; }
+
+.m-label { position: absolute; font-size: 0.6rem; bottom: 2px; right: 4px; opacity: 0.5; }
+
+/* --- TARJETAS DE TIPOS --- */
+.types-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px;
+}
+.type-card {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px;
+    transition: transform 0.2s; position: relative; overflow: hidden;
+}
+.type-card:hover { transform: translateY(-5px); border-color: var(--accent1); }
+.type-card h4 { color: var(--accent1); margin: 0 0 10px 0; font-size: 1.2rem; }
+.mini-matrix {
+    font-family: 'Fira Code'; font-size: 0.9rem; background: rgba(0,0,0,0.4);
+    padding: 10px; border-radius: 8px; text-align: center; margin-top: 15px; color: var(--accent2);
+}
+
+/* --- CALCULADORA DE PRODUCTO --- */
+.mult-container {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 10px; align-items: center;
+    background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px; overflow-x: auto;
+}
+.matrix-input {
+    display: grid; gap: 5px;
+}
+.matrix-input input {
+    width: 50px; height: 40px; background: rgba(255,255,255,0.1); border: 1px solid var(--border-color);
+    color: white; text-align: center; font-family: 'Fira Code'; border-radius: 4px;
+}
+.matrix-input input:focus { outline: none; border-color: var(--accent2); background: rgba(0, 210, 255, 0.1); }
+.op-sign { font-size: 2rem; color: var(--muted); font-weight: bold; }
+
+.step-box {
+    margin-top: 20px; background: #1a1a20; padding: 20px; border-radius: 12px; border-left: 4px solid var(--accent2);
+    font-family: 'Fira Code'; font-size: 0.95rem; color: #d0d0d0;
+}
+.highlight-row { background: rgba(155, 93, 229, 0.3) !important; }
+.highlight-col { background: rgba(0, 210, 255, 0.3) !important; }
+.highlight-cell { background: #fff !important; color: #000 !important; font-weight: bold; }
+
+.action-btn {
+    background: linear-gradient(135deg, var(--accent2), var(--accent1)); border: none; padding: 12px 30px;
+    color: white; border-radius: 50px; cursor: pointer; font-weight: bold; font-size: 1rem;
+    margin-top: 20px; transition: 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(155, 93, 229, 0.5); }
+
+@media (max-width: 900px) {
+    .page-layout { grid-template-columns: 1fr; }
+    .mult-container { grid-template-columns: 1fr; justify-content: center; text-align: center; }
+}
+/* --- ESTILOS PARA EL EXPLORADOR DE MATRICES (SECCIÓN 1) --- */
+
+/* 1. Contenedor Principal */
+.matrix-explorer-wrapper {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    overflow: hidden; /* Para contener el HUD */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    margin: 30px 0;
+}
+
+/* 2. HUD (Panel de Información Superior) */
+.matrix-hud {
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid var(--border-color);
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.hud-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    font-weight: 700;
+}
+
+/* Display Central del HUD (a_ij) */
+.hud-display {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.hud-var {
+    font-size: 0.9rem;
+    color: #fff;
+}
+
+.big-math {
+    font-family: 'Times New Roman', serif;
+    font-size: 2rem;
+    font-style: italic;
+    line-height: 1;
+}
+
+.hud-indices {
+    font-family: 'Fira Code', monospace;
+    font-style: normal;
+    font-size: 1rem;
+    letter-spacing: 2px;
+}
+
+/* Leyenda (Fila/Columna) */
+.hud-legend {
+    display: flex;
+    gap: 15px;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: block; }
+
+
+/* 3. Escenario de la Matriz */
+.matrix-stage {
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* Guías de Columnas (1 2 3 Arriba) */
+.col-guides {
+    display: grid;
+    grid-template-columns: repeat(3, 60px); /* Ancho fijo igual a las celdas */
+    gap: 10px;
+    margin-bottom: 5px;
+    padding-left: 20px; /* Compensar corchete izquierdo */
+}
+.guide-num {
+    text-align: center;
+    font-family: 'Fira Code', monospace;
+    color: var(--accent2); /* Cian para Columnas (j) */
+    font-size: 0.9rem;
+    opacity: 0.5;
+    transition: opacity 0.2s, font-weight 0.2s;
+}
+
+/* Contenedor Fila + Matriz */
+.matrix-body-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Guías de Filas (1 2 3 Izquierda) */
+.row-guides {
+    display: grid;
+    grid-template-rows: repeat(3, 60px); /* Alto fijo igual a las celdas */
+    gap: 10px;
+}
+.row-guides .guide-num {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    color: var(--accent1); /* Púrpura para Filas (i) */
+}
+
+/* 4. La Matriz (Corchetes + Grid) */
+.matrix-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bracket-left, .bracket-right {
+    font-size: 8rem;
+    font-weight: 300;
+    line-height: 0.8;
+    color: rgba(255, 255, 255, 0.15);
+    font-family: 'Times New Roman', serif;
+    transform: scaleY(1.1); /* Estirar un poco verticalmente */
+}
+
+.interactive-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 60px);
+    grid-template-rows: repeat(3, 60px);
+    gap: 10px;
+}
+
+/* Celdas Individuales */
+.m-cell {
+    width: 60px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Times New Roman', serif;
+    font-size: 1.3rem;
+    font-style: italic;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.m-cell sub {
+    font-family: 'Fira Code', monospace;
+    font-style: normal;
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+/* Efectos Hover (Interactividad CSS pura) */
+.m-cell:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(255,255,255,0.1);
+    z-index: 10;
+    border-color: rgba(255,255,255,0.3);
+}
+
+/* Clases para JS (cuando actives la interactividad) */
+.m-cell.active-cell {
+    background: white;
+    color: black;
+    box-shadow: 0 0 20px white;
+    transform: scale(1.15);
+    font-weight: bold;
+}
+
+/* Clases para iluminar guías (JS las activará) */
+.guide-active {
+    opacity: 1 !important;
+    font-weight: bold;
+    text-shadow: 0 0 10px currentColor;
+}
+
+/* Etiqueta de dimensión inferior */
+.dimension-tag {
+    margin-top: 20px;
+    font-family: 'Fira Code', monospace;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    border: 1px solid var(--border-color);
+}
+
+/* Ajustes Responsive */
+@media (max-width: 600px) {
+    .matrix-hud { justify-content: center; }
+    .matrix-container { transform: scale(0.9); }
+    .interactive-grid { gap: 5px; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); }
+    .m-cell { width: 50px; height: 50px; font-size: 1.1rem; }
+    .col-guides { grid-template-columns: repeat(3, 50px); padding-left: 15px; }
+    .row-guides { grid-template-rows: repeat(3, 50px); }
+}
+/* --- ESTILOS PARA LA SECCIÓN 3 (OPERACIONES BÁSICAS) --- */
+
+/* 1. Grid de Tarjetas */
+.basic-ops-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+/* 2. Tarjetas de Operación */
+.op-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 30px;
+    transition: transform 0.3s ease, border-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.op-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Cabecera de la Tarjeta */
+.op-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 20px;
+}
+
+/* Títulos y Subtítulos */
+.op-title h4 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--text);
+    font-weight: 700;
+}
+
+.op-subtitle {
+    display: block;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 5px;
+    opacity: 0.7;
+}
+
+/* Íconos Circulares con Gradiente */
+.op-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+/* Colores específicos para cada ícono */
+.sum-icon {
+    background: linear-gradient(135deg, var(--accent2), #00a8cc); /* Cian */
+    box-shadow: 0 0 20px rgba(0, 210, 255, 0.3);
+}
+
+.scalar-icon {
+    background: linear-gradient(135deg, var(--accent1), #7b2cbf); /* Púrpura */
+    box-shadow: 0 0 20px rgba(155, 93, 229, 0.3);
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+}
+
+/* 3. Cajas de Reglas (Alertas) */
+.rule-box {
+    background: rgba(255, 193, 7, 0.1);
+    border-left: 4px solid #ffc107; /* Amarillo Advertencia */
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.rule-box strong {
+    color: #ffc107;
+    display: block;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+/* Variante azul para información */
+.rule-box.info-type {
+    background: rgba(0, 210, 255, 0.1);
+    border-left-color: var(--accent2);
+}
+.rule-box.info-type strong {
+    color: var(--accent2);
+}
+
+/* 4. Caja de Ejemplo Matemático */
+.math-example-box {
+    margin-top: auto; /* Empuja la caja al final si hay espacio */
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+}
+
+/* Ajustes para MathJax dentro de estas cajas */
+.math-example-box mjx-container {
+    font-size: 1.1rem !important;
+    margin: 0 !important;
+    color: var(--muted);
+}
+
+/* Resaltar números en el ejemplo (Opcional, si usas \mathbf en LaTeX) */
+.math-example-box b {
+    color: #fff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .basic-ops-grid {
+        grid-template-columns: 1fr;
+    }
+    .op-header {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+/* --- ESTILOS PARA EL LABORATORIO DE PRODUCTO (SECCIÓN 4) --- */
+
+/* 1. Caja de Regla de Dimensiones (Superior) */
+.dimension-rule-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.dim-visual {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dim-connector {
+    color: #00ff00; /* Verde para indicar que coinciden */
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.dim-note {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin: 0;
+}
+
+/* 2. Contenedor Principal de la Calculadora */
+.product-lab-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 30px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.operation-symbol {
+    font-size: 1.5rem;
+    color: var(--muted);
+    font-weight: bold;
+}
+
+/* 3. Grupos de Matrices (A, B, Res) */
+.matrix-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Etiquetas (Tags) */
+.label-tag {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.row-tag { background: rgba(155, 93, 229, 0.2); color: var(--accent1); border: 1px solid var(--accent1); }
+.col-tag { background: rgba(0, 210, 255, 0.2); color: var(--accent2); border: 1px solid var(--accent2); }
+.res-tag { background: rgba(255, 255, 255, 0.1); color: #fff; border: 1px solid #fff; }
+
+/* Envoltorio de Corchetes */
+.bracket-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.bracket {
+    font-size: 5rem;
+    font-weight: 300;
+    line-height: 0.8;
+    color: rgba(255, 255, 255, 0.2);
+    font-family: 'Times New Roman', serif;
+    transform: scaleY(1.2); /* Estirar para cubrir inputs */
+}
+
+/* Grillas de Inputs */
+.input-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.input-grid input {
+    width: 45px;
+    height: 40px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: white;
+    border-radius: 6px;
+    font-family: 'Fira Code', monospace;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+/* Estilos Específicos por Grupo */
+/* Grupo A (Filas - Púrpura) */
+.group-a input:focus {
+    border-color: var(--accent1);
+    background: rgba(155, 93, 229, 0.1);
+    outline: none;
+    box-shadow: 0 0 10px rgba(155, 93, 229, 0.2);
+}
+
+/* Grupo B (Columnas - Cian) */
+.group-b input:focus {
+    border-color: var(--accent2);
+    background: rgba(0, 210, 255, 0.1);
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+}
+
+/* Grupo Resultado (Blanco/Interactivo) */
+.res-cell {
+    cursor: pointer;
+    background: rgba(0, 0, 0, 0.4) !important;
+    font-weight: bold;
+    color: var(--muted) !important; /* Gris hasta que se calcule */
+}
+.res-cell:hover {
+    border-color: #fff;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+.res-cell.calculated {
+    color: #fff !important; /* Blanco brillante al calcular */
+    text-shadow: 0 0 5px white;
+}
+
+/* 4. Controles y Botón */
+.calc-controls {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.action-btn {
+    background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(155, 93, 229, 0.4);
+}
+
+.hint-text {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 10px;
+    opacity: 0.8;
+}
+
+/* 5. Caja de Detalle Paso a Paso (La explicación) */
+.step-detail {
+    background: #121218;
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-top: 20px;
+    animation: fadeIn 0.4s ease;
+}
+
+.step-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.step-title {
+    font-weight: bold;
+    color: var(--text);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.step-coords {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    color: var(--accent2);
+}
+
+.step-visual-math {
+    font-family: 'Fira Code', monospace;
+    font-size: 1rem;
+    color: #e0e0e0;
+    line-height: 1.6;
+}
+
+/* Colores para el desglose matemático */
+.highlight-a { color: var(--accent1); font-weight: bold; }
+.highlight-b { color: var(--accent2); font-weight: bold; }
+.highlight-op { color: var(--muted); }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .product-lab-container {
+        flex-direction: column;
+        padding: 20px;
+    }
+    .operation-symbol { transform: rotate(90deg); margin: 5px 0; }
+    .bracket { font-size: 4rem; }
+    .input-grid input { width: 40px; height: 35px; }
+}
+    </style>
+</head>
+<body>
+
+<div class="sheet">
+    <header class="header">
+        <h1 class="title">Matrices I: Fundamentos</h1>
+        <p class="subtitle">El lenguaje universal para organizar datos, resolver sistemas y transformar el espacio.</p>
+    </header>
+
+    <div class="page-layout">
+        <aside class="sidebar">
+            <nav>
+                <ul class="sidebar-nav">
+                    <li><a href="#m1-1">1. Definición y Dimensión</a></li>
+                    <li><a href="#m1-2">2. Tipos Fundamentales</a></li>
+                    <li><a href="#m1-3">3. Operaciones Básicas</a></li>
+                    <li><a href="#m1-4">4. Producto de Matrices</a></li>
+                    <li><a href="#m1-5">5. Traspuesta e Inversa</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <section id="m1-1" class="content-section">
+    <h2>1. Definición y Dimensión</h2>
+    <p>Una matriz es un contenedor de datos organizado. Para no perderse, usamos un sistema de coordenadas estricto: primero bajas (<strong>Filas</strong>) y luego avanzas (<strong>Columnas</strong>).</p>
+
+    <div class="matrix-explorer-wrapper">
+        <div class="matrix-hud">
+            <div class="hud-title">Explorador de Coordenadas</div>
+            <div class="hud-display">
+                <span class="hud-var">Elemento seleccionado:</span>
+                <div class="big-math">
+                    a<sub class="hud-indices">
+                        <span id="show-i" style="color:var(--accent1)">i</span>
+                        <span id="show-j" style="color:var(--accent2)">j</span>
+                    </sub>
+                </div>
+            </div>
+            <div class="hud-legend">
+                <div class="legend-item"><span class="dot" style="background:var(--accent1)"></span> Fila (Horizontal)</div>
+                <div class="legend-item"><span class="dot" style="background:var(--accent2)"></span> Columna (Vertical)</div>
+            </div>
+        </div>
+
+        <div class="matrix-stage">
+            <div class="col-guides">
+                <span class="guide-num">1</span>
+                <span class="guide-num">2</span>
+                <span class="guide-num">3</span>
+            </div>
+
+            <div class="matrix-body-row">
+                <div class="row-guides">
+                    <span class="guide-num">1</span>
+                    <span class="guide-num">2</span>
+                    <span class="guide-num">3</span>
+                </div>
+
+                <div class="matrix-container">
+                    <div class="bracket-left">[</div>
+                    <div class="interactive-grid">
+                        <div class="m-cell" data-r="1" data-c="1">a<sub>11</sub></div>
+                        <div class="m-cell" data-r="1" data-c="2">a<sub>12</sub></div>
+                        <div class="m-cell" data-r="1" data-c="3">a<sub>13</sub></div>
+                        <div class="m-cell" data-r="2" data-c="1">a<sub>21</sub></div>
+                        <div class="m-cell" data-r="2" data-c="2">a<sub>22</sub></div>
+                        <div class="m-cell" data-r="2" data-c="3">a<sub>23</sub></div>
+                        <div class="m-cell" data-r="3" data-c="1">a<sub>31</sub></div>
+                        <div class="m-cell" data-r="3" data-c="2">a<sub>32</sub></div>
+                        <div class="m-cell" data-r="3" data-c="3">a<sub>33</sub></div>
+                    </div>
+                    <div class="bracket-right">]</div>
+                </div>
+            </div>
+            
+            <div class="dimension-tag">Dimensión: \(3 \times 3\)</div>
+        </div>
+    </div>
+</section>
+        <section id="m1-2" class="content-section">
+            <h2>2. Tipos Fundamentales</h2>
+            <p>Dependiendo de su forma y contenido, las matrices tienen nombres especiales que determinan sus propiedades.</p>
+
+            <div class="types-grid">
+                <div class="type-card">
+                    <h4>Matriz Cuadrada</h4>
+                    <p>Tiene el mismo número de filas y columnas (\(m=n\)). Solo estas tienen determinante.</p>
+                    <div class="mini-matrix">
+                        [ 1  2 ]<br>
+                        [ 3  4 ]
+                    </div>
+                </div>
+                <div class="type-card">
+                    <h4>Matriz Identidad (\(I\))</h4>
+                    <p>Es la "unidad" de las matrices. Unos en la diagonal, ceros en el resto.</p>
+                    <div class="mini-matrix">
+                        [ 1  0  0 ]<br>
+                        [ 0  1  0 ]<br>
+                        [ 0  0  1 ]
+                    </div>
+                </div>
+                <div class="type-card">
+                    <h4>Matriz Nula</h4>
+                    <p>Todos sus elementos son cero. Actúa como el neutro en la suma.</p>
+                    <div class="mini-matrix">
+                        [ 0  0 ]<br>
+                        [ 0  0 ]
+                    </div>
+                </div>
+                <div class="type-card">
+                    <h4>Matriz Diagonal</h4>
+                    <p>Solo tiene valores distintos de cero en la diagonal principal.</p>
+                    <div class="mini-matrix">
+                        [ 5  0  0 ]<br>
+                        [ 0  2  0 ]<br>
+                        [ 0  0  9 ]
+                    </div>
+                </div>
+                <div class="type-card">
+                    <h4>Matriz Fila / Columna</h4>
+                    <p>Vectores. Una sola dimensión en horizontal o vertical.</p>
+                    <div class="mini-matrix">
+                        F: [ 1 2 3 ]<br><br>
+                        C: [1]<br>&nbsp;&nbsp;&nbsp;[2]<br>&nbsp;&nbsp;&nbsp;[3]
+                    </div>
+                </div>
+                <div class="type-card">
+                    <h4>Triangular</h4>
+                    <p>Ceros por debajo (Superior) o por encima (Inferior) de la diagonal.</p>
+                    <div class="mini-matrix">
+                        [ 1  2  3 ]<br>
+                        [ 0  4  5 ]<br>
+                        [ 0  0  6 ]
+                    </div>
+                </div>
+            </div>
+        </section>
+
+       <section id="m1-3" class="content-section">
+    <h2>3. Operaciones Básicas</h2>
+    <p>Antes de multiplicar matrices entre sí, debemos dominar cómo interactúan consigo mismas (Suma/Resta) y con números externos (Escalares).</p>
+
+    <div class="basic-ops-grid">
+        
+        <div class="op-card">
+            <div class="op-header">
+                <div class="op-icon sum-icon">+</div>
+                <div class="op-title">
+                    <h4>Suma y Resta</h4>
+                    <span class="op-subtitle">Operación Posicional</span>
+                </div>
+            </div>
+            
+            <div class="rule-box">
+                <strong>⚠️ Regla de Oro:</strong> 
+                Solo puedes sumar matrices si tienen <u>exactamente la misma dimensión</u> (\(m \times n\)).
+            </div>
+
+            <p>Se opera elemento con elemento (el \(a_{11}\) con el \(b_{11}\), etc).</p>
+            
+            <div class="math-example-box">
+                $$ \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} + \begin{pmatrix} 10 & 20 \\ 30 & 40 \end{pmatrix} = \begin{pmatrix} 11 & 22 \\ 33 & 44 \end{pmatrix} $$
+            </div>
+        </div>
+
+        <div class="op-card">
+            <div class="op-header">
+                <div class="op-icon scalar-icon">k</div>
+                <div class="op-title">
+                    <h4>Producto por Escalar</h4>
+                    <span class="op-subtitle">Amplificación Global</span>
+                </div>
+            </div>
+
+            <div class="rule-box info-type">
+                <strong>¿Qué hace?</strong> 
+                Un número suelto (escalar) multiplica a <strong>TODOS</strong> los elementos de la matriz.
+            </div>
+
+            <p>Es como hacer "zoom" a los datos de la matriz.</p>
+
+            <div class="math-example-box">
+                $$ 2 \cdot \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} = \begin{pmatrix} \mathbf{2} & \mathbf{4} \\ \mathbf{6} & \mathbf{8} \end{pmatrix} $$
+            </div>
+        </div>
+
+    </div>
+</section>
+        </section>
+
+        <section id="m1-4" class="content-section">
+    <h2>4. Producto de Matrices (El "Fila por Columna")</h2>
+    <p>Multiplicar matrices no es intuitivo al principio. No se multiplica "casilla con casilla". En su lugar, realizamos un <strong>producto punto</strong>: tomamos una fila completa de la primera matriz y la "estrellamos" contra una columna de la segunda.</p>
+
+    <div class="dimension-rule-box">
+        <div class="dim-visual">
+            <span class="matrix-dim-a">(m <span class="dim-connector">× n</span>)</span>
+            <span class="op-times">·</span>
+            <span class="matrix-dim-b">(<span class="dim-connector">n ×</span> p)</span>
+            <span class="op-equals">=</span>
+            <span class="matrix-dim-res">(m × p)</span>
+        </div>
+        <p class="dim-note">El número de <strong>columnas de A</strong> debe ser igual a las <strong>filas de B</strong>. ¡Si no coinciden, no se pueden multiplicar!</p>
+    </div>
+
+    <div class="product-lab-container">
+        
+        <div class="matrix-group group-a">
+            <div class="label-tag row-tag">Matriz A (Filas)</div>
+            <div class="bracket-wrapper">
+                <div class="bracket">[</div>
+                <div class="input-grid">
+                    <input type="number" id="a-00" data-row="0" value="1">
+                    <input type="number" id="a-01" data-row="0" value="2">
+                    <input type="number" id="a-10" data-row="1" value="3">
+                    <input type="number" id="a-11" data-row="1" value="4">
+                </div>
+                <div class="bracket">]</div>
+            </div>
+        </div>
+
+        <div class="operation-symbol">×</div>
+
+        <div class="matrix-group group-b">
+            <div class="label-tag col-tag">Matriz B (Columnas)</div>
+            <div class="bracket-wrapper">
+                <div class="bracket">[</div>
+                <div class="input-grid">
+                    <input type="number" id="b-00" data-col="0" value="2">
+                    <input type="number" id="b-01" data-col="1" value="0">
+                    <input type="number" id="b-10" data-col="0" value="1">
+                    <input type="number" id="b-11" data-col="1" value="2">
+                </div>
+                <div class="bracket">]</div>
+            </div>
+        </div>
+
+        <div class="operation-symbol">=</div>
+
+        <div class="matrix-group group-res">
+            <div class="label-tag res-tag">Resultado</div>
+            <div class="bracket-wrapper">
+                <div class="bracket result-bracket">[</div>
+                <div class="input-grid result-grid">
+                    <input type="text" id="r-00" class="res-cell" readonly placeholder="c₁₁" onclick="highlightStep(0,0)">
+                    <input type="text" id="r-01" class="res-cell" readonly placeholder="c₁₂" onclick="highlightStep(0,1)">
+                    <input type="text" id="r-10" class="res-cell" readonly placeholder="c₂₁" onclick="highlightStep(1,0)">
+                    <input type="text" id="r-11" class="res-cell" readonly placeholder="c₂₂" onclick="highlightStep(1,1)">
+                </div>
+                <div class="bracket result-bracket">]</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="calc-controls">
+        <button class="action-btn" onclick="calcProduct()">Calcular Producto</button>
+        <p class="hint-text">💡 Haz clic en cualquier casilla del resultado para ver de dónde sale el número.</p>
+    </div>
+
+    <div id="step-detail-box" class="step-detail" style="display:none;">
+        <div class="step-header">
+            <span class="step-title">Detalle del Cálculo:</span>
+            <span id="step-coords" class="step-coords">c<sub>11</sub></span>
+        </div>
+        <div class="step-visual-math">
+            <div id="math-breakdown">Selecciona una celda...</div>
+        </div>
+    </div>
+</section>
+        <section id="m1-5" class="content-section">
+            <h2>5. Operaciones Clave: Traspuesta e Inversa</h2>
+            
+            <div class="types-grid">
+                <div class="type-card" style="border-color: var(--accent2);">
+                    <h4>Matriz Traspuesta (\(A^T\))</h4>
+                    <p>Se obtiene intercambiando filas por columnas. La primera fila pasa a ser la primera columna, y así sucesivamente.</p>
+                    <div class="math-cell">
+                        $$ A = \begin{pmatrix} 1 & 2 \\ 3 & 4 \end{pmatrix} \rightarrow A^T = \begin{pmatrix} 1 & 3 \\ 2 & 4 \end{pmatrix} $$
+                    </div>
+                </div>
+
+                <div class="type-card" style="border-color: var(--accent1);">
+                    <h4>Matriz Inversa (\(A^{-1}\))</h4>
+                    <p>Es aquella que, al multiplicarla por la original, da la Identidad: \(A \cdot A^{-1} = I\). No todas las matrices tienen inversa (solo si det \(\neq 0\)).</p>
+                    <div class="math-cell">
+                        $$ A \cdot A^{-1} = \begin{pmatrix} 1 & 0 \\ 0 & 1 \end{pmatrix} $$
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // ==========================================
+        // 1. SISTEMA DE NAVEGACIÓN (TABS)
+        // ==========================================
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+        const sections = document.querySelectorAll('.content-section');
+
+        function showSection(id) {
+            // Ocultar todas
+            sections.forEach(s => s.classList.remove('active'));
+            navLinks.forEach(l => l.classList.remove('active'));
+
+            // Mostrar actual
+            const target = document.querySelector(id);
+            if(target) target.classList.add('active');
+            
+            // Activar link
+            const activeLink = document.querySelector(`.sidebar-nav a[href="${id}"]`);
+            if(activeLink) activeLink.classList.add('active');
+        }
+
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                showSection(link.getAttribute('href'));
+            });
+        });
+
+        // Mostrar la primera sección por defecto
+        showSection('#m1-1');
+
+
+        // ==========================================
+        // 2. LÓGICA DEL EXPLORADOR (SECCIÓN 1)
+        // ==========================================
+        const cells = document.querySelectorAll('.m-cell');
+        const hudI = document.getElementById('show-i');
+        const hudJ = document.getElementById('show-j');
+
+        cells.forEach(cell => {
+            cell.addEventListener('mouseenter', () => {
+                const r = cell.getAttribute('data-r');
+                const c = cell.getAttribute('data-c');
+
+                // Actualizar HUD
+                hudI.innerText = r;
+                hudJ.innerText = c;
+
+                // Iluminar guías (opcional, si agregaste clases CSS para esto)
+                cell.classList.add('active-cell');
+            });
+
+            cell.addEventListener('mouseleave', () => {
+                hudI.innerText = 'i';
+                hudJ.innerText = 'j';
+                cell.classList.remove('active-cell');
+            });
+        });
+    });
+
+
+    // ==========================================
+    // 3. LÓGICA DE MULTIPLICACIÓN (SECCIÓN 4)
+    // ==========================================
+    
+    // Función auxiliar para obtener valor numérico
+    const val = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+    // Estado global de la matriz calculada para usar en los detalles
+    let matrixState = {
+        a: [[0,0], [0,0]],
+        b: [[0,0], [0,0]],
+        r: [[0,0], [0,0]]
+    };
+
+    function calcProduct() {
+        // 1. Leer Matriz A
+        const a00 = val('a-00'), a01 = val('a-01');
+        const a10 = val('a-10'), a11 = val('a-11');
+
+        // 2. Leer Matriz B
+        const b00 = val('b-00'), b01 = val('b-01');
+        const b10 = val('b-10'), b11 = val('b-11');
+
+        // 3. Calcular Resultado (Producto Punto)
+        // c00 = Fila 0 de A * Col 0 de B
+        const c00 = (a00 * b00) + (a01 * b10);
+        const c01 = (a00 * b01) + (a01 * b11);
+        const c10 = (a10 * b00) + (a11 * b10);
+        const c11 = (a10 * b01) + (a11 * b11);
+
+        // 4. Guardar estado
+        matrixState.a = [[a00, a01], [a10, a11]];
+        matrixState.b = [[b00, b01], [b10, b11]];
+        matrixState.r = [[c00, c01], [c10, c11]];
+
+        // 5. Actualizar Inputs de Resultado
+        updateRes('r-00', c00);
+        updateRes('r-01', c01);
+        updateRes('r-10', c10);
+        updateRes('r-11', c11);
+
+        // Mostrar caja de detalles vacía o con instrucción
+        document.getElementById('step-detail-box').style.display = 'block';
+        document.getElementById('math-breakdown').innerHTML = "<em>¡Cálculo completado! Haz clic en los números del resultado para ver el desglose.</em>";
+    }
+
+    function updateRes(id, val) {
+        const el = document.getElementById(id);
+        el.value = val;
+        el.classList.add('calculated'); // Añade brillo blanco definido en CSS
+    }
+
+    // Función que se activa al hacer CLICK en una celda de resultado
+    function highlightStep(row, col) {
+        // 1. Limpiar estilos previos
+        document.querySelectorAll('.matrix-input-group input').forEach(i => {
+            i.style.background = '';
+            i.style.color = '';
+            i.style.fontWeight = '';
+            i.style.boxShadow = '';
+        });
+
+        // 2. Resaltar Fila de A (Púrpura)
+        const rowInputs = document.querySelectorAll(`.group-a input[data-row="${row}"]`);
+        rowInputs.forEach(inp => {
+            inp.style.background = 'rgba(155, 93, 229, 0.3)';
+            inp.style.color = '#fff';
+            inp.style.boxShadow = '0 0 10px var(--accent1)';
+        });
+
+        // 3. Resaltar Columna de B (Cian)
+        const colInputs = document.querySelectorAll(`.group-b input[data-col="${col}"]`);
+        colInputs.forEach(inp => {
+            inp.style.background = 'rgba(0, 210, 255, 0.3)';
+            inp.style.color = '#fff';
+            inp.style.boxShadow = '0 0 10px var(--accent2)';
+        });
+
+        // 4. Generar Explicación Matemática (LaTeX)
+        const a_val1 = matrixState.a[row][0];
+        const a_val2 = matrixState.a[row][1];
+        const b_val1 = matrixState.b[0][col];
+        const b_val2 = matrixState.b[1][col];
+        const result = matrixState.r[row][col];
+
+        // Usamos colores HTML dentro del LaTeX para conectar con la visualización
+        const stepHTML = `
+            $$ \\begin{aligned} 
+            c_{${row+1}${col+1}} &= (\\text{Fila } ${row+1} \\text{ de A}) \\cdot (\\text{Col } ${col+1} \\text{ de B}) \\\\
+            &= ({\\color{#9b5de5}${a_val1}} \\cdot {\\color{#00d2ff}${b_val1}}) + ({\\color{#9b5de5}${a_val2}} \\cdot {\\color{#00d2ff}${b_val2}}) \\\\
+            &= ${a_val1*b_val1} + ${a_val2*b_val2} \\\\
+            &= \\mathbf{${result}}
+            \\end{aligned} $$
+        `;
+
+        // 5. Inyectar y Renderizar
+        document.getElementById('step-coords').innerText = `c${row+1}${col+1}`;
+        const container = document.getElementById('math-breakdown');
+        container.innerHTML = stepHTML;
+        
+        if(window.MathJax) {
+            MathJax.typesetPromise([container]).catch(e => console.log(e));
+        }
+    }
+
+</script>
+
+</body>
+</html>
