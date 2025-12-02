@@ -209,7 +209,7 @@
         .coef-a, .coef-c { color: var(--accent1); font-weight: bold; }
         .coef-b, .coef-d { color: var(--accent2); font-weight: bold; }
         .res-1, .res-2 { color: #fff; font-weight: bold; border-bottom: 1px dashed #555; }
-        .transform-arrow { color: var(--muted); font-weight: bold; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; margin: 0 10px; }
+        .transform-arrow-sys { color: var(--muted); font-weight: bold; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 2px; margin: 0 10px; }
         
         .matrix-eq-row { display: flex; align-items: center; gap: 10px; justify-content: center; }
         .m-wrap { display: flex; align-items: center; }
@@ -255,6 +255,93 @@
         .data-card:hover { border-color: #feca57; } .data-card .app-icon { color: #feca57; box-shadow: 0 0 15px rgba(254, 202, 87, 0.1); }
         .crypto-card:hover { border-color: #1dd1a1; } .crypto-card .app-icon { color: #1dd1a1; box-shadow: 0 0 15px rgba(29, 209, 161, 0.1); }
 
+        /* =========================================
+           6. ESTILOS SECCIÓN 5: VISUALIZADOR GAUSS (AÑADIDO)
+           ========================================= */
+        .gauss-visualizer-container {
+            background: rgba(0,0,0,0.2);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+
+        .gauss-stage {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .augmented-matrix-box {
+            display: flex;
+            align-items: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.5rem;
+            position: relative;
+        }
+
+        .gauss-grid {
+            display: grid;
+            grid-template-columns: 60px 60px 2px 60px; /* C1, C2, Sep, Res */
+            grid-template-rows: 50px 50px;
+            gap: 10px;
+            text-align: center;
+            align-items: center;
+            margin: 0 10px;
+        }
+
+        .g-cell {
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            height: 100%;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .g-cell.pivot { background: rgba(155, 93, 229, 0.2); border: 1px solid var(--accent1); color: #fff; }
+        .g-cell.zero { color: var(--muted); opacity: 0.5; }
+
+        .g-separator {
+            grid-column: 3;
+            grid-row: 1 / span 2;
+            width: 2px;
+            height: 100%;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .g-bracket { font-size: 6rem; font-weight: 300; line-height: 1; margin-top: -10px; }
+
+        .row-indicators {
+            display: flex; flex-direction: column; gap: 10px; justify-content: center;
+            margin-left: 10px; font-size: 0.8rem; color: var(--accent2); font-weight: bold;
+        }
+        .ri-label { height: 50px; display: flex; align-items: center; }
+
+        .gauss-controls-panel {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 12px;
+            min-width: 300px;
+            display: flex; flex-direction: column; gap: 20px;
+        }
+
+        .step-explanation-box { text-align: left; }
+        .op-text-display { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: #fff; }
+        .op-desc-display { color: var(--muted); font-size: 0.9rem; line-height: 1.4; min-height: 50px; }
+
+        .control-buttons { display: flex; gap: 10px; justify-content: space-between; align-items: center; }
+        
+        .nav-btn {
+            background: var(--accent1); border: none; padding: 10px 20px; color: white;
+            border-radius: 8px; font-family: inherit; font-weight: 600; cursor: pointer; transition: 0.2s;
+        }
+        .nav-btn:hover:not(:disabled) { background: #b580e8; transform: translateY(-2px); }
+        .nav-btn:disabled { background: #444; color: #888; cursor: not-allowed; }
+        .nav-btn.prev-btn { background: transparent; border: 1px solid var(--border-color); }
+        .nav-btn.prev-btn:hover:not(:disabled) { background: rgba(255,255,255,0.1); }
+
         @media (max-width: 900px) {
             .page-layout { grid-template-columns: 1fr; }
             .det-dashboard { grid-template-columns: 1fr; }
@@ -262,8 +349,9 @@
             .det-inputs { grid-template-columns: repeat(2, 50px); }
             .det-in { height: 40px; font-size: 1rem; }
             .system-transform-container { flex-direction: column; }
-            .transform-arrow { transform: rotate(90deg); margin: 15px 0; }
+            .transform-arrow-sys { transform: rotate(90deg); margin: 15px 0; }
             .app-card { flex-direction: column; text-align: center; align-items: center; }
+            .gauss-stage { flex-direction: column; }
         }
     </style>
 </head>
@@ -283,6 +371,7 @@
                     <li><a href="#m2-2">2. Sistemas Lineales</a></li>
                     <li><a href="#m2-3">3. Autovalores (Eigen)</a></li>
                     <li><a href="#m2-4">4. Aplicaciones Reales</a></li>
+                    <li><a href="#m2-5">5. Lab: Gauss Jordan</a></li>
                 </ul>
             </nav>
         </aside>
@@ -356,7 +445,7 @@
                     <div class="equation-row"><span class="coef-a">2</span>x + <span class="coef-b">3</span>y = <span class="res-1">5</span></div>
                     <div class="equation-row"><span class="coef-c">4</span>x - <span class="coef-d">1</span>y = <span class="res-2">3</span></div>
                 </div>
-                <div class="transform-arrow">➔ Se convierte en ➔</div>
+                <div class="transform-arrow-sys">➔ Se convierte en ➔</div>
                 <div class="sys-card matrix-view">
                     <div class="card-label">Mundo Matricial (\(Ax=B\))</div>
                     <div class="matrix-eq-row">
@@ -398,6 +487,56 @@
                 <div class="app-card crypto-card"><div class="app-icon">🔒</div><div class="app-content"><h4>Criptografía</h4><p>Algoritmos de cifrado basados en matrices inversas modulares.</p></div></div>
             </div>
         </section>
+
+        <section id="m2-5" class="content-section">
+            <h2>5. Laboratorio: Eliminación de Gauss</h2>
+            <div class="gauss-visualizer-container" id="gauss-demo">
+                <h3 class="gauss-title">⚡ Visualizador Interactivo</h3>
+                <p style="text-align:center; margin-bottom:30px; color:var(--muted);">
+                    Objetivo: Transformar la matriz en la <strong>Identidad</strong> (diagonales de 1, resto 0) para hallar \(x\) y \(y\).
+                </p>
+
+                <div class="gauss-stage">
+                    <div class="augmented-matrix-box">
+                        <div class="bracket g-bracket">[</div>
+                        <div class="gauss-grid" id="gauss-grid">
+                            <div class="g-cell r1 c1" id="g-00">2</div>
+                            <div class="g-cell r1 c2" id="g-01">3</div>
+                            <div class="g-separator"></div>
+                            <div class="g-cell r1 res" id="g-02">5</div>
+                            <div class="g-cell r2 c1" id="g-10">4</div>
+                            <div class="g-cell r2 c2" id="g-11">-1</div>
+                            <div class="g-separator"></div>
+                            <div class="g-cell r2 res" id="g-12">3</div>
+                        </div>
+                        <div class="bracket g-bracket">]</div>
+
+                        <div class="row-indicators">
+                            <div class="ri-label">R₁</div>
+                            <div class="ri-label">R₂</div>
+                        </div>
+                    </div>
+
+                    <div class="gauss-controls-panel">
+                        <div class="step-explanation-box">
+                            <h4 style="margin:0 0 10px 0; color:var(--accent2); font-size:1rem;">ESTADO ACTUAL:</h4>
+                            <div id="gauss-op-text" class="op-text-display">Sistema Original</div>
+                            <div id="gauss-op-desc" class="op-desc-display">
+                                Representación matricial de:<br>
+                                2x + 3y = 5<br>
+                                4x - 1y = 3
+                            </div>
+                        </div>
+
+                        <div class="control-buttons">
+                            <button class="nav-btn prev-btn" onclick="gaussPrev()" id="btn-prev" disabled>← Anterior</button>
+                            <div class="step-counter">Paso <span id="current-step-num" style="color:white; font-weight:bold;">0</span> / 4</div>
+                            <button class="nav-btn next-btn" onclick="gaussNext()" id="btn-next">Siguiente →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
 
@@ -424,7 +563,9 @@
             showSection(link.getAttribute('href'));
         });
     });
+    // Iniciar en Determinante
     showSection('#m2-1');
+
 
     // --- LÓGICA DE DETERMINANTES (SECCIÓN 1) ---
     function calcDet() {
@@ -442,7 +583,7 @@
         document.getElementById('step-sec').innerText = `(${b})(${c}) = ${secProd}`;
         document.getElementById('det-result').innerText = det;
 
-        // Actualizar Gráfico Geométrico (Simulación visual)
+        // Actualizar Gráfico Geométrico
         const areaText = document.getElementById('geo-area-text');
         const shape = document.getElementById('geo-shape');
         const statusOk = document.getElementById('status-invertible');
@@ -465,6 +606,86 @@
             statusErr.style.display = 'none';
         }
     }
+
+
+    // --- LÓGICA DE GAUSS-JORDAN (SECCIÓN 5) ---
+    const gaussSteps = [
+        {
+            vals: [2, 3, 5, 4, -1, 3],
+            title: "Sistema Original",
+            desc: "Representamos el sistema en una matriz aumentada.",
+            focus: []
+        },
+        {
+            vals: [1, 1.5, 2.5, 4, -1, 3],
+            title: "Paso 1: Pivote R1",
+            desc: "Dividimos la Fila 1 entre 2 para obtener un '1' principal.<br><strong>R₁ ← R₁ / 2</strong>",
+            focus: [0] // Índice de celda destacada
+        },
+        {
+            vals: [1, 1.5, 2.5, 0, -7, -7],
+            title: "Paso 2: Eliminar R2",
+            desc: "Multiplicamos R1 por 4 y la restamos a R2 para obtener un '0' abajo.<br><strong>R₂ ← R₂ - 4·R₁</strong>",
+            focus: [3]
+        },
+        {
+            vals: [1, 1.5, 2.5, 0, 1, 1],
+            title: "Paso 3: Pivote R2",
+            desc: "Dividimos la Fila 2 entre -7 para obtener el segundo '1'.<br><strong>R₂ ← R₂ / -7</strong><br>Ya sabemos que y = 1.",
+            focus: [4]
+        },
+        {
+            vals: [1, 0, 1, 0, 1, 1],
+            title: "Paso 4: Solución Final",
+            desc: "Usamos R2 para eliminar el 1.5 de R1.<br><strong>R₁ ← R₁ - 1.5·R₂</strong><br>Resultado: x=1, y=1.",
+            focus: [1]
+        }
+    ];
+
+    let currentStep = 0;
+
+    function updateGaussVisuals() {
+        const step = gaussSteps[currentStep];
+        const cells = [
+            document.getElementById('g-00'), document.getElementById('g-01'), document.getElementById('g-02'),
+            document.getElementById('g-10'), document.getElementById('g-11'), document.getElementById('g-12')
+        ];
+
+        // Actualizar valores
+        step.vals.forEach((val, idx) => {
+            cells[idx].innerText = val;
+            // Estilos condicionales
+            cells[idx].classList.remove('pivot', 'zero');
+            if (currentStep > 0 && idx === step.focus[0]) cells[idx].classList.add('pivot');
+            if (val === 0) cells[idx].classList.add('zero');
+        });
+
+        // Actualizar Textos
+        document.getElementById('gauss-op-text').innerText = step.title;
+        document.getElementById('gauss-op-desc').innerHTML = step.desc;
+        document.getElementById('current-step-num').innerText = currentStep;
+
+        // Controlar botones
+        document.getElementById('btn-prev').disabled = currentStep === 0;
+        document.getElementById('btn-next').disabled = currentStep === gaussSteps.length - 1;
+    }
+
+    function gaussNext() {
+        if (currentStep < gaussSteps.length - 1) {
+            currentStep++;
+            updateGaussVisuals();
+        }
+    }
+
+    function gaussPrev() {
+        if (currentStep > 0) {
+            currentStep--;
+            updateGaussVisuals();
+        }
+    }
+
+    // Inicializar Gauss
+    updateGaussVisuals();
 </script>
 
 </body>
